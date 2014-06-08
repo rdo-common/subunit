@@ -4,7 +4,7 @@
 
 Name:           subunit
 Version:        0.0.18
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        C bindings for subunit
 
 License:        ASL 2.0 or BSD
@@ -218,6 +218,9 @@ make check
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Sun Jun 08 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.0.18-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
+
 * Thu Apr 24 2014 Jerry James <loganjerry@gmail.com> - 0.0.18-2
 - Add license text to all independent packages
 - Add perl module Requires to the -perl subpackage
