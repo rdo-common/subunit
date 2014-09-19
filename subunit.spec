@@ -3,8 +3,8 @@
 # Once that has been resolved, a python3 subpackage will be produced.
 
 Name:           subunit
-Version:        0.0.18
-Release:        5%{?dist}
+Version:        0.0.21
+Release:        1%{?dist}
 Summary:        C bindings for subunit
 
 License:        ASL 2.0 or BSD
@@ -22,7 +22,7 @@ BuildRequires:  python-extras
 BuildRequires:  python-iso8601
 BuildRequires:  python-setuptools
 BuildRequires:  python-testscenarios
-BuildRequires:  python-testtools >= 0.9.35
+BuildRequires:  python-testtools >= 0.9.37
 
 %description
 Subunit C bindings.  See the python-subunit package for test processing
@@ -74,7 +74,7 @@ Summary:        Streaming protocol for test results
 BuildArch:      noarch
 Requires:       python-extras
 Requires:       python-iso8601
-Requires:       python-testtools >= 0.9.35
+Requires:       python-testtools >= 0.9.37
 
 %description -n python-%{name}
 Subunit is a streaming protocol for test results.  The protocol is a
@@ -181,7 +181,8 @@ make check
 %postun cppunit -p /sbin/ldconfig
 
 %files
-%doc Apache-2.0 BSD COPYING NEWS README
+%doc NEWS README
+%license Apache-2.0 BSD COPYING
 %{_libdir}/lib%{name}.so.*
 
 %files devel
@@ -201,16 +202,17 @@ make check
 %{_libdir}/pkgconfig/libcppunit_%{name}.pc
 
 %files perl
-%doc Apache-2.0 BSD COPYING
+%license Apache-2.0 BSD COPYING
 %{_bindir}/%{name}-diff
 %{perl_vendorlib}/*
 
 %files shell
-%doc Apache-2.0 BSD COPYING shell/README
+%doc shell/README
+%license Apache-2.0 BSD COPYING
 %config(noreplace) %{_sysconfdir}/profile.d/%{name}.sh
 
 %files -n python-%{name}
-%doc Apache-2.0 BSD COPYING
+%license Apache-2.0 BSD COPYING
 %{python2_sitelib}/%{name}/
 
 %files filters
@@ -218,6 +220,10 @@ make check
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Fri Sep 19 2014 Jerry James <loganjerry@gmail.com> - 0.0.21-1
+- New upstream release
+- Fix license handling
+
 * Wed Aug 27 2014 Jitka Plesnikova <jplesnik@redhat.com> - 0.0.18-5
 - Perl 5.20 rebuild
 
