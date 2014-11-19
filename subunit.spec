@@ -4,7 +4,7 @@
 
 Name:           subunit
 Version:        0.0.21
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        C bindings for subunit
 
 License:        ASL 2.0 or BSD
@@ -139,8 +139,14 @@ sed -e 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' \
 
 make %{?_smp_mflags}
 
+%{__python} setup.py build
+
 %install
-%make_install INSTALL="%{_bindir}/install -p"
+# We set pkgpython_PYTHON for efficiency to disable the automake python compilation
+%make_install pkgpython_PYTHON='' INSTALL="%{_bindir}/install -p"
+
+# We use setup.py to also include the egg information required by pip
+%{__python} setup.py install --skip-build --root %{buildroot}
 
 # Install the shell interface
 mkdir -p %{buildroot}%{_sysconfdir}/profile.d
@@ -171,6 +177,8 @@ done
 export LD_LIBRARY_PATH=$PWD/.libs
 export PYTHONPATH=$PWD/python/subunit:$PWD/python/subunit/tests
 make check
+# Don't distribute the python tests
+rm -fr %{buildroot}%{python_sitelib}/subunit/tests
 
 %post -p /sbin/ldconfig
 
@@ -214,12 +222,16 @@ make check
 %files -n python-%{name}
 %license Apache-2.0 BSD COPYING
 %{python2_sitelib}/%{name}/
+%{python2_sitelib}/python_%{name}-%{version}-*.egg-info
 
 %files filters
 %{_bindir}/*
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Wed Nov 19 2014 Pádraig Brady <pbrady@redhat.com> - 0.0.21-2
+- Make python-subunit egginfo available for pip etc.
+
 * Fri Sep 19 2014 Jerry James <loganjerry@gmail.com> - 0.0.21-1
 - New upstream release
 - Fix license handling
