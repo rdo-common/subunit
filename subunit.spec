@@ -194,20 +194,22 @@ mv python2 python
 %endif
 
 %install
-# We set pkgpython_PYTHON for efficiency to disable automake python compilation
-%make_install pkgpython_PYTHON='' INSTALL="%{_bindir}/install -p"
-
-# Install for python 2
-%{__python2} setup.py install --skip-build --root %{buildroot}
-
+# Install for python 3
 %if 0%{?with_py3}
 mv python python2
 mv python3 python
 %{__python3} setup.py install --skip-build --root %{buildroot}
 chmod 0755 %{buildroot}%{python3_sitelib}/%{name}/run.py
+rm -f %{buildroot}%{_bindir}/*
 mv python python3
 mv python2 python
 %endif
+
+# We set pkgpython_PYTHON for efficiency to disable automake python compilation
+%make_install pkgpython_PYTHON='' INSTALL="%{_bindir}/install -p"
+
+# Install for python 2
+%{__python2} setup.py install --skip-build --root %{buildroot}
 
 # Install the shell interface
 mkdir -p %{buildroot}%{_sysconfdir}/profile.d
