@@ -1,10 +1,10 @@
-# There is no python3 subpackage due to lack of a python3 variant of
-# testscenarios (see https://bugs.launchpad.net/testscenarios/+bug/941963).
-# Once that has been resolved, a python3 subpackage will be produced.
+%if 0%{?fedora} || 0%{?rhel} >= 8
+%global with_py3 1
+%endif
 
 Name:           subunit
-Version:        0.0.21
-Release:        2%{?dist}
+Version:        1.0.0
+Release:        1%{?dist}
 Summary:        C bindings for subunit
 
 License:        ASL 2.0 or BSD
@@ -23,6 +23,14 @@ BuildRequires:  python-iso8601
 BuildRequires:  python-setuptools
 BuildRequires:  python-testscenarios
 BuildRequires:  python-testtools >= 0.9.37
+
+%if 0%{?with_py3}
+BuildRequires:  python3-devel
+BuildRequires:  python3-extras
+BuildRequires:  python3-iso8601
+BuildRequires:  python3-setuptools
+BuildRequires:  python3-testtools >= 0.9.37
+%endif
 
 %description
 Subunit C bindings.  See the python-subunit package for test processing
@@ -98,6 +106,37 @@ A number of useful things can be done easily with subunit:
   deserialization to get test runs on distributed machines to be
   reported in real time.
 
+%if 0%{?with_py3}
+%package -n python3-%{name}
+Summary:        Streaming protocol for test results
+BuildArch:      noarch
+Requires:       python3-extras
+Requires:       python3-iso8601
+Requires:       python3-testtools >= 0.9.37
+
+%description -n python3-%{name}
+Subunit is a streaming protocol for test results.  The protocol is a
+binary encoding that is easily generated and parsed.  By design all the
+components of the protocol conceptually fit into the xUnit TestCase ->
+TestResult interaction.
+
+Subunit comes with command line filters to process a subunit stream and
+language bindings for python, C, C++ and shell.  Bindings are easy to
+write for other languages.
+
+A number of useful things can be done easily with subunit:
+- Test aggregation: Tests run separately can be combined and then
+  reported/displayed together.  For instance, tests from different
+  languages can be shown as a seamless whole.
+- Test archiving: A test run may be recorded and replayed later.
+- Test isolation: Tests that may crash or otherwise interact badly with
+  each other can be run separately and then aggregated, rather than
+  interfering with each other.
+- Grid testing: subunit can act as the necessary serialization and
+  deserialization to get test runs on distributed machines to be
+  reported in real time.
+%endif
+
 %package filters
 Summary:        Command line filters for processing subunit streams
 BuildArch:      noarch
@@ -126,6 +165,11 @@ done
 sed "/libcppunit_subunit_la_/s,\$(LIBS),& -lcppunit -L$PWD/.libs -lsubunit," \
     -i Makefile.in
 
+%if 0%{?with_py3}
+# Prepare to build for python 3
+cp -a python python3
+%endif
+
 %build
 export INSTALLDIRS=perl
 %configure --disable-static
@@ -139,14 +183,31 @@ sed -e 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' \
 
 make %{?_smp_mflags}
 
-%{__python} setup.py build
+%{__python2} setup.py build
+
+%if 0%{?with_py3}
+mv python python2
+mv python3 python
+%{__python3} setup.py build
+mv python python3
+mv python2 python
+%endif
 
 %install
-# We set pkgpython_PYTHON for efficiency to disable the automake python compilation
+# We set pkgpython_PYTHON for efficiency to disable automake python compilation
 %make_install pkgpython_PYTHON='' INSTALL="%{_bindir}/install -p"
 
-# We use setup.py to also include the egg information required by pip
-%{__python} setup.py install --skip-build --root %{buildroot}
+# Install for python 2
+%{__python2} setup.py install --skip-build --root %{buildroot}
+
+%if 0%{?with_py3}
+mv python python2
+mv python3 python
+%{__python3} setup.py install --skip-build --root %{buildroot}
+chmod 0755 %{buildroot}%{python3_sitelib}/%{name}/run.py
+mv python python3
+mv python2 python
+%endif
 
 # Install the shell interface
 mkdir -p %{buildroot}%{_sysconfdir}/profile.d
@@ -173,12 +234,17 @@ for fil in filters/*; do
   touch -r $fil %{buildroot}%{_bindir}/$(basename $fil)
 done
 
+# Don't distribute the python tests
+rm -fr %{buildroot}%{python2_sitelib}/subunit/tests
+rm -fr %{buildroot}%{python3_sitelib}/subunit/tests
+
 %check
+# We run tests for python 2 only, since there is no python 3 variant of
+# testscenarios (see https://bugs.launchpad.net/testscenarios/+bug/941963).
+# Once that has been resolved, we can run tests for python 3 also.
 export LD_LIBRARY_PATH=$PWD/.libs
 export PYTHONPATH=$PWD/python/subunit:$PWD/python/subunit/tests
 make check
-# Don't distribute the python tests
-rm -fr %{buildroot}%{python_sitelib}/subunit/tests
 
 %post -p /sbin/ldconfig
 
@@ -224,11 +290,22 @@ rm -fr %{buildroot}%{python_sitelib}/subunit/tests
 %{python2_sitelib}/%{name}/
 %{python2_sitelib}/python_%{name}-%{version}-*.egg-info
 
+%if 0%{?with_py3}
+%files -n python3-%{name}
+%license Apache-2.0 BSD COPYING
+%{python3_sitelib}/%{name}/
+%{python3_sitelib}/python_%{name}-%{version}-*.egg-info
+%endif
+
 %files filters
 %{_bindir}/*
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Tue Dec  9 2014 Jerry James <loganjerry@gmail.com> - 1.0.0-1
+- New upstream release (bz 1171483 and 1172204)
+- Add python3 subpackage (bz 1172195)
+
 * Wed Nov 19 2014 Pádraig Brady <pbrady@redhat.com> - 0.0.21-2
 - Make python-subunit egginfo available for pip etc.
 
