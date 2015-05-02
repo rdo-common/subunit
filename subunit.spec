@@ -4,7 +4,7 @@
 
 Name:           subunit
 Version:        1.0.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        C bindings for subunit
 
 License:        ASL 2.0 or BSD
@@ -304,6 +304,9 @@ make check
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Sat May 02 2015 Kalev Lember <kalevlember@gmail.com> - 1.0.0-2
+- Rebuilt for GCC 5 C++11 ABI change
+
 * Tue Dec  9 2014 Jerry James <loganjerry@gmail.com> - 1.0.0-1
 - New upstream release (bz 1171483 and 1172204)
 - Add python3 subpackage (bz 1172195)
