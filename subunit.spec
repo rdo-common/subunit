@@ -4,7 +4,7 @@
 
 Name:           subunit
 Version:        1.0.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        C bindings for subunit
 
 License:        ASL 2.0 or BSD
@@ -304,6 +304,9 @@ make check
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Wed Jun 03 2015 Jitka Plesnikova <jplesnik@redhat.com> - 1.0.0-3
+- Perl 5.22 rebuild
+
 * Sat May 02 2015 Kalev Lember <kalevlember@gmail.com> - 1.0.0-2
 - Rebuilt for GCC 5 C++11 ABI change
 
