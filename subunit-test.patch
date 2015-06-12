@@ -1,0 +1,17 @@
+--- ./python/subunit/tests/__init__.py.orig	2015-03-09 17:18:58.000000000 -0600
++++ ./python/subunit/tests/__init__.py	2015-06-11 20:00:00.000000000 -0600
+@@ -24,10 +24,12 @@ from testscenarios import generate_scena
+ # For testing: different pythons have different str() implementations.
+ if (3,1) < sys.version_info < (3, 4):
+     _remote_exception_repr = "testtools.testresult.real._StringException"
++    _remote_exception_id = "57"
+ else:
+     _remote_exception_repr = "_StringException"
+-_remote_exception_str = "Traceback (most recent call last):\ntesttools.testresult.real._StringException"
+-_remote_exception_str_chunked = "57\r\n" + _remote_exception_str + ": boo qux\n0\r\n"
++    _remote_exception_id = "3D"
++_remote_exception_str = "Traceback (most recent call last):\n" + _remote_exception_repr
++_remote_exception_str_chunked = _remote_exception_id + "\r\n" + _remote_exception_str + ": boo qux\n0\r\n"
+ 
+ 
+ from subunit.tests import (

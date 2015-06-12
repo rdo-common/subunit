@@ -3,8 +3,8 @@
 %endif
 
 Name:           subunit
-Version:        1.0.0
-Release:        3%{?dist}
+Version:        1.1.0
+Release:        1%{?dist}
 Summary:        C bindings for subunit
 
 License:        ASL 2.0 or BSD
@@ -12,6 +12,8 @@ URL:            https://launchpad.net/%{name}
 Source0:        https://launchpad.net/%{name}/trunk/%{version}/+download/%{name}-%{version}.tar.gz
 # Fedora-specific patch: remove the bundled copy of python-iso8601.
 Patch0:         %{name}-unbundle-iso8601.patch
+# Patch to fix the python2 tests in 1.1.0
+Patch1:         %{name}-test.patch
 
 BuildRequires:  check-devel
 BuildRequires:  cppunit-devel
@@ -29,6 +31,7 @@ BuildRequires:  python3-devel
 BuildRequires:  python3-extras
 BuildRequires:  python3-iso8601
 BuildRequires:  python3-setuptools
+BuildRequires:  python3-testscenarios
 BuildRequires:  python3-testtools >= 0.9.37
 %endif
 
@@ -149,6 +152,7 @@ Command line filters for processing subunit streams.
 %prep
 %setup -q
 %patch0
+%patch1
 
 # Remove bundled code
 rm -fr python/iso8601 python/subunit/iso8601.py
@@ -241,12 +245,20 @@ rm -fr %{buildroot}%{python2_sitelib}/subunit/tests
 rm -fr %{buildroot}%{python3_sitelib}/subunit/tests
 
 %check
-# We run tests for python 2 only, since there is no python 3 variant of
-# testscenarios (see https://bugs.launchpad.net/testscenarios/+bug/941963).
-# Once that has been resolved, we can run tests for python 3 also.
+# Run the tests for python2
 export LD_LIBRARY_PATH=$PWD/.libs
 export PYTHONPATH=$PWD/python/subunit:$PWD/python/subunit/tests
 make check
+
+%if 0%{?with_py3}
+# Run the tests for python3
+mv python python2
+mv python3 python
+export PYTHON=%{__python3}
+make check
+mv python python3
+mv python2 python
+%endif
 
 %post -p /sbin/ldconfig
 
@@ -304,6 +316,10 @@ make check
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Fri Jun 12 2015 Jerry James <loganjerry@gmail.com> - 1.1.0-1
+- New upstream release
+- Enable python3 tests
+
 * Wed Jun 03 2015 Jitka Plesnikova <jplesnik@redhat.com> - 1.0.0-3
 - Perl 5.22 rebuild
 
