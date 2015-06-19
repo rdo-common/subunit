@@ -4,7 +4,7 @@
 
 Name:           subunit
 Version:        1.1.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        C bindings for subunit
 
 License:        ASL 2.0 or BSD
@@ -316,6 +316,9 @@ mv python2 python
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Fri Jun 19 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+
 * Fri Jun 12 2015 Jerry James <loganjerry@gmail.com> - 1.1.0-1
 - New upstream release
 - Enable python3 tests
