@@ -4,7 +4,7 @@
 
 Name:           subunit
 Version:        1.1.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        C bindings for subunit
 
 License:        ASL 2.0 or BSD
@@ -204,6 +204,8 @@ mv python python2
 mv python3 python
 %{__python3} setup.py install --skip-build --root %{buildroot}
 chmod 0755 %{buildroot}%{python3_sitelib}/%{name}/run.py
+# Create symlink to unbundled iso8601
+ln -s %{python3_sitelib}/iso8601/iso8601.py %{buildroot}%{python3_sitelib}/%{name}/iso8601.py
 rm -f %{buildroot}%{_bindir}/*
 mv python python3
 mv python2 python
@@ -214,6 +216,8 @@ mv python2 python
 
 # Install for python 2
 %{__python2} setup.py install --skip-build --root %{buildroot}
+# Create symlink to unbundled iso8601
+ln -s %{python2_sitelib}/iso8601/iso8601.py %{buildroot}%{python2_sitelib}/%{name}/iso8601.py
 
 # Install the shell interface
 mkdir -p %{buildroot}%{_sysconfdir}/profile.d
@@ -248,14 +252,23 @@ rm -fr %{buildroot}%{python3_sitelib}/subunit/tests
 # Run the tests for python2
 export LD_LIBRARY_PATH=$PWD/.libs
 export PYTHONPATH=$PWD/python/subunit:$PWD/python/subunit/tests
+# Link iso8601 also to the test dir, since it's (almost) impossible to run tests
+#  using the version installed in %%{buildroot}
+ln -s %{python2_sitelib}/iso8601/iso8601.py $PWD/python/subunit
 make check
+# Make sure subunit.iso8601 is importable from buildroot
+PYTHONPATH=%{buildroot}%{python2_sitelib} %{__python2} -c "import subunit.iso8601"
 
 %if 0%{?with_py3}
 # Run the tests for python3
 mv python python2
 mv python3 python
 export PYTHON=%{__python3}
+# Linking iso8601 also applies to python 3 tests
+ln -s %{python3_sitelib}/iso8601/iso8601.py $PWD/python/subunit
 make check
+# Make sure subunit.iso8601 is importable from buildroot
+PYTHONPATH=%{buildroot}%{python3_sitelib} %{__python3} -c "import subunit.iso8601"
 mv python python3
 mv python2 python
 %endif
@@ -316,6 +329,10 @@ mv python2 python
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Tue Jul 14 2015 Slavek Kabrda <bkabrda@redhat.com> - 1.1.0-3
+- Symlink iso8601 file into subunit Python dirs to preserve compatibility while unbundling
+Resolves: rhbz#1233581
+
 * Fri Jun 19 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.0-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
 
