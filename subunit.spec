@@ -4,7 +4,7 @@
 
 Name:           subunit
 Version:        1.1.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        C bindings for subunit
 
 License:        ASL 2.0 or BSD
@@ -12,8 +12,6 @@ URL:            https://launchpad.net/%{name}
 Source0:        https://launchpad.net/%{name}/trunk/%{version}/+download/%{name}-%{version}.tar.gz
 # Fedora-specific patch: remove the bundled copy of python-iso8601.
 Patch0:         %{name}-unbundle-iso8601.patch
-# Patch to fix the python2 tests in 1.1.0
-Patch1:         %{name}-test.patch
 
 BuildRequires:  check-devel
 BuildRequires:  cppunit-devel
@@ -24,7 +22,9 @@ BuildRequires:  python-extras
 BuildRequires:  python-iso8601
 BuildRequires:  python-setuptools
 BuildRequires:  python-testscenarios
-BuildRequires:  python-testtools >= 0.9.37
+BuildRequires:  python-testtools >= 1.8.0
+# Workaround for bz 1251568; this can be dropped once that bug is fixed
+BuildRequires:  python-traceback2
 
 %if 0%{?with_py3}
 BuildRequires:  python3-devel
@@ -32,7 +32,7 @@ BuildRequires:  python3-extras
 BuildRequires:  python3-iso8601
 BuildRequires:  python3-setuptools
 BuildRequires:  python3-testscenarios
-BuildRequires:  python3-testtools >= 0.9.37
+BuildRequires:  python3-testtools >= 1.8.0
 %endif
 
 %description
@@ -85,7 +85,9 @@ Summary:        Streaming protocol for test results
 BuildArch:      noarch
 Requires:       python-extras
 Requires:       python-iso8601
-Requires:       python-testtools >= 0.9.37
+Requires:       python-testtools >= 1.8.0
+# Workaround for bz 1251568; this can be dropped once that bug is fixed
+Requires:       python-traceback2
 
 %description -n python-%{name}
 Subunit is a streaming protocol for test results.  The protocol is a
@@ -115,7 +117,7 @@ Summary:        Streaming protocol for test results
 BuildArch:      noarch
 Requires:       python3-extras
 Requires:       python3-iso8601
-Requires:       python3-testtools >= 0.9.37
+Requires:       python3-testtools >= 1.8.0
 
 %description -n python3-%{name}
 Subunit is a streaming protocol for test results.  The protocol is a
@@ -152,10 +154,6 @@ Command line filters for processing subunit streams.
 %prep
 %setup -q
 %patch0
-%patch1
-
-# Remove bundled code
-rm -fr python/iso8601 python/subunit/iso8601.py
 
 # Help the dependency generator
 for filt in filters/*; do
@@ -173,6 +171,10 @@ sed "/libcppunit_subunit_la_/s,\$(LIBS),& -lcppunit -L$PWD/.libs -lsubunit," \
 # Prepare to build for python 3
 cp -a python python3
 %endif
+
+# Replace bundled code with a symlink
+ln -f -s %{python2_sitelib}/iso8601/iso8601.py python/subunit/iso8601.py
+ln -f -s %{python3_sitelib}/iso8601/iso8601.py python3/subunit/iso8601.py
 
 %build
 export INSTALLDIRS=perl
@@ -204,8 +206,6 @@ mv python python2
 mv python3 python
 %{__python3} setup.py install --skip-build --root %{buildroot}
 chmod 0755 %{buildroot}%{python3_sitelib}/%{name}/run.py
-# Create symlink to unbundled iso8601
-ln -s %{python3_sitelib}/iso8601/iso8601.py %{buildroot}%{python3_sitelib}/%{name}/iso8601.py
 rm -f %{buildroot}%{_bindir}/*
 mv python python3
 mv python2 python
@@ -216,8 +216,18 @@ mv python2 python
 
 # Install for python 2
 %{__python2} setup.py install --skip-build --root %{buildroot}
-# Create symlink to unbundled iso8601
-ln -s %{python2_sitelib}/iso8601/iso8601.py %{buildroot}%{python2_sitelib}/%{name}/iso8601.py
+
+# Replace bundled code with a symlink again
+for fil in iso8601.py iso8601.pyc iso8601.pyo; do
+  ln -f -s %{python2_sitelib}/iso8601/$fil \
+     %{buildroot}%{python2_sitelib}/subunit/$fil
+done
+ln -f -s %{python3_sitelib}/iso8601/iso8601.py \
+   %{buildroot}%{python3_sitelib}/subunit/iso8601.py
+for fil in iso8601.cpython-34.pyc iso8601.cpython-34.pyo; do
+  ln -f -s %{python3_sitelib}/iso8601/__pycache__/$fil \
+     %{buildroot}%{python3_sitelib}/subunit/__pycache__/$fil
+done
 
 # Install the shell interface
 mkdir -p %{buildroot}%{_sysconfdir}/profile.d
@@ -252,9 +262,6 @@ rm -fr %{buildroot}%{python3_sitelib}/subunit/tests
 # Run the tests for python2
 export LD_LIBRARY_PATH=$PWD/.libs
 export PYTHONPATH=$PWD/python/subunit:$PWD/python/subunit/tests
-# Link iso8601 also to the test dir, since it's (almost) impossible to run tests
-#  using the version installed in %%{buildroot}
-ln -s %{python2_sitelib}/iso8601/iso8601.py $PWD/python/subunit
 make check
 # Make sure subunit.iso8601 is importable from buildroot
 PYTHONPATH=%{buildroot}%{python2_sitelib} %{__python2} -c "import subunit.iso8601"
@@ -264,8 +271,6 @@ PYTHONPATH=%{buildroot}%{python2_sitelib} %{__python2} -c "import subunit.iso860
 mv python python2
 mv python3 python
 export PYTHON=%{__python3}
-# Linking iso8601 also applies to python 3 tests
-ln -s %{python3_sitelib}/iso8601/iso8601.py $PWD/python/subunit
 make check
 # Make sure subunit.iso8601 is importable from buildroot
 PYTHONPATH=%{buildroot}%{python3_sitelib} %{__python3} -c "import subunit.iso8601"
@@ -329,6 +334,9 @@ mv python2 python
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Fri Aug  7 2015 Jerry James <loganjerry@gmail.com> - 1.1.0-4
+- Fix FTBFS due to older python-testtools (bz 1249714)
+
 * Tue Jul 14 2015 Slavek Kabrda <bkabrda@redhat.com> - 1.1.0-3
 - Symlink iso8601 file into subunit Python dirs to preserve compatibility while unbundling
 Resolves: rhbz#1233581
