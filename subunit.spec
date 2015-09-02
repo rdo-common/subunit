@@ -156,6 +156,7 @@ Command line filters for processing subunit streams.
 %prep
 %setup -q
 %patch0
+%patch1 -p1
 
 # Help the dependency generator
 for filt in filters/*; do
