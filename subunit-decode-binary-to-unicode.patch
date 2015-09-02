@@ -1,0 +1,26 @@
+From 2051f178d568a1595f497308703495b9e33ff80b Mon Sep 17 00:00:00 2001
+From: Lukas Bezdicka <lbezdick@redhat.com>
+Date: Wed, 2 Sep 2015 06:55:42 -0400
+Subject: [PATCH] Correctly decode binary to utf8 string
+
+This patch solves error:
+ Expecting a string b'2014-12-16 20:42:25.441886Z'
+
+Related-Bug: #1403214
+---
+ python/subunit/__init__.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/python/subunit/__init__.py b/python/subunit/__init__.py
+index 7d864e8..b198884 100644
+--- a/python/subunit/__init__.py
++++ b/python/subunit/__init__.py
+@@ -556,7 +556,7 @@ def _handleTags(self, offset, line):
+     def _handleTime(self, offset, line):
+         # Accept it, but do not do anything with it yet.
+         try:
+-            event_time = iso8601.parse_date(line[offset:-1])
++            event_time = iso8601.parse_date(line[offset:-1].decode('utf8'))
+         except TypeError:
+             raise TypeError(_u("Failed to parse %r, got %r")
+                 % (line, sys.exec_info[1]))

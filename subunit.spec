@@ -4,7 +4,7 @@
 
 Name:           subunit
 Version:        1.1.0
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        C bindings for subunit
 
 License:        ASL 2.0 or BSD
@@ -12,6 +12,8 @@ URL:            https://launchpad.net/%{name}
 Source0:        https://launchpad.net/%{name}/trunk/%{version}/+download/%{name}-%{version}.tar.gz
 # Fedora-specific patch: remove the bundled copy of python-iso8601.
 Patch0:         %{name}-unbundle-iso8601.patch
+# Merged upsteam: https://github.com/testing-cabal/subunit/pull/10
+Patch1:         %{name}-decode-binary-to-unicode.patch
 
 BuildRequires:  check-devel
 BuildRequires:  cppunit-devel
@@ -334,6 +336,9 @@ mv python2 python
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Wed Sep  2 2015 Haïkel Guémar <hguemar@fedoraproject.org> - 1.1.0-5
+- Backport upstream patches (RHBZ#1259286)
+
 * Fri Aug  7 2015 Jerry James <loganjerry@gmail.com> - 1.1.0-4
 - Fix FTBFS due to older python-testtools (bz 1249714)
 
