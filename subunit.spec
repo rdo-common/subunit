@@ -2,6 +2,15 @@
 %global with_py3 1
 %endif
 
+# FIXME: workaround to prevent FTBFS on older Fedora
+%if 0%{?fedora} && 0%{?fedora} < 24
+%global __os_install_post /usr/lib/rpm/brp-compress \
+  %{!?__debug_package:/usr/lib/rpm/brp-strip %{__strip}} \
+  /usr/lib/rpm/brp-strip-static-archive %{__strip} \
+  /usr/lib/rpm//brp-strip-comment-note %{__strip} %{__objdump} \
+  /usr/lib/rpm/brp-python-hardlink 
+%endif
+
 Name:           subunit
 Version:        1.1.0
 Release:        5%{?dist}
