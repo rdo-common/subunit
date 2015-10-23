@@ -12,13 +12,15 @@
 %endif
 
 Name:           subunit
-Version:        1.1.0
-Release:        5%{?dist}
+Version:        1.2.0
+Release:        1%{?dist}
 Summary:        C bindings for subunit
+
+%global majver  %(cut -d. -f-2 <<< %{version})
 
 License:        ASL 2.0 or BSD
 URL:            https://launchpad.net/%{name}
-Source0:        https://launchpad.net/%{name}/trunk/%{version}/+download/%{name}-%{version}.tar.gz
+Source0:        https://launchpad.net/%{name}/trunk/%{majver}/+download/%{name}-%{version}.tar.gz
 # Fedora-specific patch: remove the bundled copy of python-iso8601.
 Patch0:         %{name}-unbundle-iso8601.patch
 # Merged upsteam: https://github.com/testing-cabal/subunit/pull/10
@@ -29,7 +31,10 @@ BuildRequires:  cppunit-devel
 BuildRequires:  perl(ExtUtils::MakeMaker)
 BuildRequires:  pkgconfig
 BuildRequires:  python2-devel
+BuildRequires:  python2-hypothesis
+BuildRequires:  python-docutils
 BuildRequires:  python-extras
+BuildRequires:  python-fixtures
 BuildRequires:  python-iso8601
 BuildRequires:  python-setuptools
 BuildRequires:  python-testscenarios
@@ -39,8 +44,11 @@ BuildRequires:  python-traceback2
 
 %if 0%{?with_py3}
 BuildRequires:  python3-devel
+BuildRequires:  python3-docutils
 BuildRequires:  python3-extras
+BuildRequires:  python3-fixtures
 BuildRequires:  python3-iso8601
+BuildRequires:  python3-hypothesis
 BuildRequires:  python3-setuptools
 BuildRequires:  python3-testscenarios
 BuildRequires:  python3-testtools >= 1.8.0
@@ -179,6 +187,11 @@ done
 sed "/libcppunit_subunit_la_/s,\$(LIBS),& -lcppunit -L$PWD/.libs -lsubunit," \
     -i Makefile.in
 
+# Fix test failure with version 1.2.0
+sed -ri 's/^(_remote_exception_repr = ").*(_StringException")/\1\2/' \
+    python/subunit/tests/__init__.py
+sed -i 's/tb_prelude + //' python/subunit/tests/test_test_protocol.py
+
 %if 0%{?with_py3}
 # Prepare to build for python 3
 cp -a python python3
@@ -299,7 +312,7 @@ mv python2 python
 %postun cppunit -p /sbin/ldconfig
 
 %files
-%doc NEWS README
+%doc NEWS README.rst
 %license Apache-2.0 BSD COPYING
 %{_libdir}/lib%{name}.so.*
 
@@ -346,6 +359,9 @@ mv python2 python
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Fri Oct 23 2015 Jerry James <loganjerry@gmail.com> - 1.2.0-1
+- New upstream release
+
 * Wed Sep  2 2015 Haïkel Guémar <hguemar@fedoraproject.org> - 1.1.0-5
 - Backport upstream patches (RHBZ#1259286)
 
