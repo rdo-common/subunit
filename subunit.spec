@@ -13,7 +13,7 @@
 
 Name:           subunit
 Version:        1.2.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -359,6 +359,9 @@ mv python2 python
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Tue Nov 10 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.2.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Changes/python3.5
+
 * Fri Oct 23 2015 Jerry James <loganjerry@gmail.com> - 1.2.0-1
 - New upstream release
 
