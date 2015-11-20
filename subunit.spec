@@ -187,11 +187,6 @@ done
 sed "/libcppunit_subunit_la_/s,\$(LIBS),& -lcppunit -L$PWD/.libs -lsubunit," \
     -i Makefile.in
 
-# Fix test failure with version 1.2.0
-sed -ri 's/^(_remote_exception_repr = ").*(_StringException")/\1\2/' \
-    python/subunit/tests/__init__.py
-sed -i 's/tb_prelude + //' python/subunit/tests/test_test_protocol.py
-
 %if 0%{?with_py3}
 # Prepare to build for python 3
 cp -a python python3
