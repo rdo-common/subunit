@@ -209,12 +209,12 @@ sed -e 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' \
 
 make %{?_smp_mflags}
 
-%{__python2} setup.py build
+%py2_build
 
 %if 0%{?with_py3}
 mv python python2
 mv python3 python
-%{__python3} setup.py build
+%py3_build
 mv python python3
 mv python2 python
 %endif
@@ -224,7 +224,7 @@ mv python2 python
 %if 0%{?with_py3}
 mv python python2
 mv python3 python
-%{__python3} setup.py install --skip-build --root %{buildroot}
+%py3_install
 chmod 0755 %{buildroot}%{python3_sitelib}/%{name}/run.py
 rm -f %{buildroot}%{_bindir}/*
 mv python python3
@@ -235,7 +235,7 @@ mv python2 python
 %make_install pkgpython_PYTHON='' INSTALL="%{_bindir}/install -p"
 
 # Install for python 2
-%{__python2} setup.py install --skip-build --root %{buildroot}
+%py2_install
 
 # Replace bundled code with a symlink again
 for fil in iso8601.py iso8601.pyc iso8601.pyo; do
