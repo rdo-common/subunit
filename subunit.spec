@@ -13,7 +13,7 @@
 
 Name:           subunit
 Version:        1.2.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -354,6 +354,9 @@ mv python2 python
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Sun Feb 14 2016 David Tardon <dtardon@redhat.com> - 1.2.0-4
+- rebuild for cppunit 1.13.2
+
 * Fri Feb 05 2016 Fedora Release Engineering <releng@fedoraproject.org> - 1.2.0-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
 
