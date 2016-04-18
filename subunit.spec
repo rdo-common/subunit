@@ -13,7 +13,7 @@
 
 Name:           subunit
 Version:        1.2.0
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -194,7 +194,9 @@ cp -a python python3
 
 # Replace bundled code with a symlink
 ln -f -s %{python2_sitelib}/iso8601/iso8601.py python/subunit/iso8601.py
+%if 0%{?with_py3}
 ln -f -s %{python3_sitelib}/iso8601/iso8601.py python3/subunit/iso8601.py
+%endif
 
 %build
 export INSTALLDIRS=perl
@@ -242,12 +244,14 @@ for fil in iso8601.py iso8601.pyc iso8601.pyo; do
   ln -f -s %{python2_sitelib}/iso8601/$fil \
      %{buildroot}%{python2_sitelib}/subunit/$fil
 done
+%if 0%{?with_py3}
 ln -f -s %{python3_sitelib}/iso8601/iso8601.py \
    %{buildroot}%{python3_sitelib}/subunit/iso8601.py
 for fil in iso8601.cpython-34.pyc iso8601.cpython-34.pyo; do
   ln -f -s %{python3_sitelib}/iso8601/__pycache__/$fil \
      %{buildroot}%{python3_sitelib}/subunit/__pycache__/$fil
 done
+%endif
 
 # Install the shell interface
 mkdir -p %{buildroot}%{_sysconfdir}/profile.d
@@ -354,6 +358,9 @@ mv python2 python
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Mon Apr 18 2016 Marcin Juszkiewicz <mjuszkiewicz@redhat.com> - 1.2.0-5
+- Added missing check for %%with_py3 to make it buildable under RHEL/CentOS
+
 * Sun Feb 14 2016 David Tardon <dtardon@redhat.com> - 1.2.0-4
 - rebuild for cppunit 1.13.2
 
