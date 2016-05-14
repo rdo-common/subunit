@@ -13,7 +13,7 @@
 
 Name:           subunit
 Version:        1.2.0
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -358,6 +358,9 @@ mv python2 python
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Sat May 14 2016 Jitka Plesnikova <jplesnik@redhat.com> - 1.2.0-6
+- Perl 5.24 rebuild
+
 * Mon Apr 18 2016 Marcin Juszkiewicz <mjuszkiewicz@redhat.com> - 1.2.0-5
 - Added missing check for %%with_py3 to make it buildable under RHEL/CentOS
 
