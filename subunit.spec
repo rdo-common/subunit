@@ -1,5 +1,7 @@
 %if 0%{?fedora} || 0%{?rhel} >= 8
-%global with_py3 1
+%bcond_without python3
+%else
+%bcond_with python3
 %endif
 
 # FIXME: workaround to prevent FTBFS on older Fedora
@@ -13,7 +15,7 @@
 
 Name:           subunit
 Version:        1.2.0
-Release:        6%{?dist}
+Release:        7%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -28,6 +30,7 @@ Patch1:         %{name}-decode-binary-to-unicode.patch
 
 BuildRequires:  check-devel
 BuildRequires:  cppunit-devel
+BuildRequires:  gcc-c++
 BuildRequires:  perl(ExtUtils::MakeMaker)
 BuildRequires:  pkgconfig
 BuildRequires:  python2-devel
@@ -35,14 +38,12 @@ BuildRequires:  python2-hypothesis
 BuildRequires:  python-docutils
 BuildRequires:  python-extras
 BuildRequires:  python-fixtures
-BuildRequires:  python-iso8601
-BuildRequires:  python-setuptools
+BuildRequires:  python2-iso8601
+BuildRequires:  python2-setuptools
 BuildRequires:  python-testscenarios
-BuildRequires:  python-testtools >= 1.8.0
-# Workaround for bz 1251568; this can be dropped once that bug is fixed
-BuildRequires:  python-traceback2
+BuildRequires:  python2-testtools >= 1.8.0
 
-%if 0%{?with_py3}
+%if %{with python3}
 BuildRequires:  python3-devel
 BuildRequires:  python3-docutils
 BuildRequires:  python3-extras
@@ -99,16 +100,16 @@ BuildArch:      noarch
 Subunit shell bindings.  See the python-subunit package for test
 processing functionality.
 
-%package -n python-%{name}
+%package -n python2-%{name}
 Summary:        Streaming protocol for test results
 BuildArch:      noarch
 Requires:       python-extras
-Requires:       python-iso8601
-Requires:       python-testtools >= 1.8.0
-# Workaround for bz 1251568; this can be dropped once that bug is fixed
-Requires:       python-traceback2
+Requires:       python2-iso8601
+Requires:       python2-testtools >= 1.8.0
 
-%description -n python-%{name}
+%{?python_provide:%python_provide python2-%{name}}
+
+%description -n python2-%{name}
 Subunit is a streaming protocol for test results.  The protocol is a
 binary encoding that is easily generated and parsed.  By design all the
 components of the protocol conceptually fit into the xUnit TestCase ->
@@ -130,13 +131,15 @@ A number of useful things can be done easily with subunit:
   deserialization to get test runs on distributed machines to be
   reported in real time.
 
-%if 0%{?with_py3}
+%if %{with python3}
 %package -n python3-%{name}
 Summary:        Streaming protocol for test results
 BuildArch:      noarch
 Requires:       python3-extras
 Requires:       python3-iso8601
 Requires:       python3-testtools >= 1.8.0
+
+%{?python_provide:%python_provide python3-%{name}}
 
 %description -n python3-%{name}
 Subunit is a streaming protocol for test results.  The protocol is a
@@ -164,14 +167,16 @@ A number of useful things can be done easily with subunit:
 %package filters
 Summary:        Command line filters for processing subunit streams
 BuildArch:      noarch
-Requires:       python-%{name} = %{version}-%{release}
+Requires:       python2-%{name} = %{version}-%{release}
 Requires:       pygtk2
 
 %description filters
 Command line filters for processing subunit streams.
 
 %prep
-%setup -q
+%setup -qc
+mv %{name}-%{version} python2
+pushd python2
 %patch0
 %patch1 -p1
 
@@ -187,18 +192,29 @@ done
 sed "/libcppunit_subunit_la_/s,\$(LIBS),& -lcppunit -L$PWD/.libs -lsubunit," \
     -i Makefile.in
 
-%if 0%{?with_py3}
-# Prepare to build for python 3
-cp -a python python3
-%endif
+# Depend on python2, not just python
+sed -i.orig 's,%{_bindir}/python,&2,' python/subunit/run.py
+touch -r python/subunit/run.py.orig python/subunit/run.py
+rm python/subunit/run.py.orig
 
 # Replace bundled code with a symlink
 ln -f -s %{python2_sitelib}/iso8601/iso8601.py python/subunit/iso8601.py
-%if 0%{?with_py3}
-ln -f -s %{python3_sitelib}/iso8601/iso8601.py python3/subunit/iso8601.py
+popd
+
+%if %{with python3}
+# Prepare to build for python 3
+cp -a python2 python3
+pushd python3
+sed -i.orig 's,\(%{_bindir}/python\)2,\13,' python/subunit/run.py
+touch -r python/subunit/run.py.orig python/subunit/run.py
+rm python/subunit/run.py.orig
+ln -f -s %{python3_sitelib}/iso8601/iso8601.py python/subunit/iso8601.py
+popd
 %endif
 
 %build
+# Build for everything except python3
+pushd python2
 export INSTALLDIRS=perl
 %configure --disable-static
 
@@ -210,33 +226,54 @@ sed -e 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' \
     -i libtool
 
 make %{?_smp_mflags}
-
 %py2_build
+popd
 
-%if 0%{?with_py3}
-mv python python2
-mv python3 python
+# Build for python3
+%if %{with python3}
+pushd python3
+export INSTALLDIRS=perl
+export PYTHON=%{_bindir}/python3
+%configure --disable-static
+
+# Get rid of undesirable hardcoded rpaths; workaround libtool reordering
+# -Wl,--as-needed after all the libraries.
+sed -e 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' \
+    -e 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' \
+    -e 's|CC=.g..|& -Wl,--as-needed|' \
+    -i libtool
+
+make %{?_smp_mflags}
 %py3_build
-mv python python3
-mv python2 python
+popd
 %endif
 
 %install
-# Install for python 3
-%if 0%{?with_py3}
-mv python python2
-mv python3 python
+# Install for python 3 first so that the python 2 install overwrites files
+%if %{with python3}
+pushd python3
 %py3_install
 chmod 0755 %{buildroot}%{python3_sitelib}/%{name}/run.py
-rm -f %{buildroot}%{_bindir}/*
-mv python python3
-mv python2 python
+
+# Replace bundled code with a symlink again
+ln -f -s %{python3_sitelib}/iso8601/iso8601.py \
+   %{buildroot}%{python3_sitelib}/subunit/iso8601.py
+for fil in iso8601.cpython-35.opt-1.pyc iso8601.cpython-35.pyc; do
+  ln -f -s %{python3_sitelib}/iso8601/__pycache__/$fil \
+     %{buildroot}%{python3_sitelib}/subunit/__pycache__/$fil
+done
+
+# Don't distribute the python tests
+rm -fr %{buildroot}%{python3_sitelib}/subunit/tests
+
+popd
 %endif
 
+pushd python2
 # We set pkgpython_PYTHON for efficiency to disable automake python compilation
 %make_install pkgpython_PYTHON='' INSTALL="%{_bindir}/install -p"
 
-# Install for python 2
+# Install the python interface
 %py2_install
 
 # Replace bundled code with a symlink again
@@ -244,14 +281,6 @@ for fil in iso8601.py iso8601.pyc iso8601.pyo; do
   ln -f -s %{python2_sitelib}/iso8601/$fil \
      %{buildroot}%{python2_sitelib}/subunit/$fil
 done
-%if 0%{?with_py3}
-ln -f -s %{python3_sitelib}/iso8601/iso8601.py \
-   %{buildroot}%{python3_sitelib}/subunit/iso8601.py
-for fil in iso8601.cpython-34.pyc iso8601.cpython-34.pyo; do
-  ln -f -s %{python3_sitelib}/iso8601/__pycache__/$fil \
-     %{buildroot}%{python3_sitelib}/subunit/__pycache__/$fil
-done
-%endif
 
 # Install the shell interface
 mkdir -p %{buildroot}%{_sysconfdir}/profile.d
@@ -280,26 +309,27 @@ done
 
 # Don't distribute the python tests
 rm -fr %{buildroot}%{python2_sitelib}/subunit/tests
-rm -fr %{buildroot}%{python3_sitelib}/subunit/tests
+
+popd
 
 %check
 # Run the tests for python2
+pushd python2
 export LD_LIBRARY_PATH=$PWD/.libs
 export PYTHONPATH=$PWD/python/subunit:$PWD/python/subunit/tests
 make check
 # Make sure subunit.iso8601 is importable from buildroot
 PYTHONPATH=%{buildroot}%{python2_sitelib} %{__python2} -c "import subunit.iso8601"
+popd
 
-%if 0%{?with_py3}
+%if %{with python3}
 # Run the tests for python3
-mv python python2
-mv python3 python
+pushd python3
 export PYTHON=%{__python3}
 make check
 # Make sure subunit.iso8601 is importable from buildroot
 PYTHONPATH=%{buildroot}%{python3_sitelib} %{__python3} -c "import subunit.iso8601"
-mv python python3
-mv python2 python
+popd
 %endif
 
 %post -p /sbin/ldconfig
@@ -311,12 +341,12 @@ mv python2 python
 %postun cppunit -p /sbin/ldconfig
 
 %files
-%doc NEWS README.rst
-%license Apache-2.0 BSD COPYING
+%doc python2/NEWS python2/README.rst
+%license python2/Apache-2.0 python2/BSD python2/COPYING
 %{_libdir}/lib%{name}.so.*
 
 %files devel
-%doc c/README
+%doc python2/c/README
 %dir %{_includedir}/%{name}/
 %{_includedir}/%{name}/child.h
 %{_libdir}/lib%{name}.so
@@ -326,29 +356,29 @@ mv python2 python
 %{_libdir}/libcppunit_%{name}.so.*
 
 %files cppunit-devel
-%doc c++/README
+%doc python2/c++/README
 %{_includedir}/%{name}/SubunitTestProgressListener.h
 %{_libdir}/libcppunit_%{name}.so
 %{_libdir}/pkgconfig/libcppunit_%{name}.pc
 
 %files perl
-%license Apache-2.0 BSD COPYING
+%license python2/Apache-2.0 python2/BSD python2/COPYING
 %{_bindir}/%{name}-diff
 %{perl_vendorlib}/*
 
 %files shell
-%doc shell/README
-%license Apache-2.0 BSD COPYING
+%doc python2/shell/README
+%license python2/Apache-2.0 python2/BSD python2/COPYING
 %config(noreplace) %{_sysconfdir}/profile.d/%{name}.sh
 
-%files -n python-%{name}
-%license Apache-2.0 BSD COPYING
+%files -n python2-%{name}
+%license python2/Apache-2.0 python2/BSD python2/COPYING
 %{python2_sitelib}/%{name}/
 %{python2_sitelib}/python_%{name}-%{version}-*.egg-info
 
-%if 0%{?with_py3}
+%if %{with python3}
 %files -n python3-%{name}
-%license Apache-2.0 BSD COPYING
+%license python3/Apache-2.0 python3/BSD python3/COPYING
 %{python3_sitelib}/%{name}/
 %{python3_sitelib}/python_%{name}-%{version}-*.egg-info
 %endif
@@ -358,6 +388,11 @@ mv python2 python
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Fri Jun  3 2016 Jerry James <loganjerry@gmail.com> - 1.2.0-7
+- Fix -python3 dependency on /usr/bin/python (bz 1342508)
+- Comply with latest python packaging guidelines
+- Drop workaround for bz 1251568, now fixed
+
 * Sat May 14 2016 Jitka Plesnikova <jplesnik@redhat.com> - 1.2.0-6
 - Perl 5.24 rebuild
 
