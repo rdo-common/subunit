@@ -31,6 +31,7 @@ Patch1:         %{name}-decode-binary-to-unicode.patch
 BuildRequires:  check-devel
 BuildRequires:  cppunit-devel
 BuildRequires:  gcc-c++
+BuildRequires:  perl-generators
 BuildRequires:  perl(ExtUtils::MakeMaker)
 BuildRequires:  pkgconfig
 BuildRequires:  python2-devel
