@@ -15,7 +15,7 @@
 
 Name:           subunit
 Version:        1.2.0
-Release:        7%{?dist}
+Release:        8%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -389,6 +389,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Tue Jul 19 2016 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.2.0-8
+- https://fedoraproject.org/wiki/Changes/Automatic_Provides_for_Python_RPM_Packages
+
 * Fri Jun  3 2016 Jerry James <loganjerry@gmail.com> - 1.2.0-7
 - Fix -python3 dependency on /usr/bin/python (bz 1342508)
 - Comply with latest python packaging guidelines
