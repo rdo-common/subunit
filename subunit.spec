@@ -15,7 +15,7 @@
 
 Name:           subunit
 Version:        1.2.0
-Release:        8%{?dist}
+Release:        9%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -389,6 +389,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Tue Dec 20 2016 Miro Hrončok <mhroncok@redhat.com> - 1.2.0-9
+- Rebuild for Python 3.6
+
 * Tue Jul 19 2016 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.2.0-8
 - https://fedoraproject.org/wiki/Changes/Automatic_Provides_for_Python_RPM_Packages
 
