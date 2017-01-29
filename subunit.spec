@@ -4,18 +4,9 @@
 %bcond_with python3
 %endif
 
-# FIXME: workaround to prevent FTBFS on older Fedora
-%if 0%{?fedora} && 0%{?fedora} < 24
-%global __os_install_post /usr/lib/rpm/brp-compress \
-  %{!?__debug_package:/usr/lib/rpm/brp-strip %{__strip}} \
-  /usr/lib/rpm/brp-strip-static-archive %{__strip} \
-  /usr/lib/rpm//brp-strip-comment-note %{__strip} %{__objdump} \
-  /usr/lib/rpm/brp-python-hardlink 
-%endif
-
 Name:           subunit
 Version:        1.2.0
-Release:        9%{?dist}
+Release:        10%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -170,6 +161,7 @@ Summary:        Command line filters for processing subunit streams
 BuildArch:      noarch
 Requires:       python2-%{name} = %{version}-%{release}
 Requires:       pygtk2
+Requires:       python-junitxml
 
 %description filters
 Command line filters for processing subunit streams.
@@ -389,6 +381,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Sun Jan 29 2017 Jerry James <loganjerry@gmail.com> - 1.2.0-10
+- Add Requires on python-junitxml to -filter subpackage (bz 1417291)
+
 * Tue Dec 20 2016 Miro Hrončok <mhroncok@redhat.com> - 1.2.0-9
 - Rebuild for Python 3.6
 
