@@ -6,7 +6,7 @@
 
 Name:           subunit
 Version:        1.2.0
-Release:        10%{?dist}
+Release:        11%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -381,6 +381,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Sat Feb 11 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1.2.0-11
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
+
 * Sun Jan 29 2017 Jerry James <loganjerry@gmail.com> - 1.2.0-10
 - Add Requires on python-junitxml to -filter subpackage (bz 1417291)
 
