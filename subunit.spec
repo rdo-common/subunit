@@ -6,7 +6,7 @@
 
 Name:           subunit
 Version:        1.2.0
-Release:        11%{?dist}
+Release:        12%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -381,6 +381,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Fri May  5 2017 Jerry James <loganjerry@gmail.com> - 1.2.0-12
+- Rebuild for cppunit 1.14.0
+
 * Sat Feb 11 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1.2.0-11
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
 
