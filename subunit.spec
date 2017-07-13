@@ -4,6 +4,13 @@
 %bcond_with python3
 %endif
 
+# FIXME: byte-compilation is broken due to symlinks on EL7
+# py_byte_compile macros is not available on EL7 too
+%if 0%{?rhel} && %{?rhel} <= 7
+# Turn off the brp-python-bytecompile script
+%global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
+%endif
+
 Name:           subunit
 Version:        1.2.0
 Release:        14%{?dist}
