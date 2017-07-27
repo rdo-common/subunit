@@ -6,7 +6,7 @@
 
 Name:           subunit
 Version:        1.2.0
-Release:        14%{?dist}
+Release:        15%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -381,6 +381,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Thu Jul 27 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1.2.0-15
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
+
 * Mon Jun 26 2017 Jerry James <loganjerry@gmail.com> - 1.2.0-14
 - Rebuild to fix broken perl dependencies
 
