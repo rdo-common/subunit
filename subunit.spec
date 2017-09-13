@@ -6,14 +6,14 @@
 
 # FIXME: byte-compilation is broken due to symlinks on EL7
 # py_byte_compile macros is not available on EL7 too
-%if 0%{?rhel} && %{?rhel} <= 7
+%if 0%{?rhel} && 0%{?rhel} <= 7
 # Turn off the brp-python-bytecompile script
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 %endif
 
 Name:           subunit
 Version:        1.2.0
-Release:        14%{?dist}
+Release:        15%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -388,6 +388,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Wed Sep 13 2017 Jon Schlueter <jschluet@redhat.com> 1.2.0-15
+- fix broken if macro guard
+
 * Mon Jun 26 2017 Jerry James <loganjerry@gmail.com> - 1.2.0-14
 - Rebuild to fix broken perl dependencies
 
