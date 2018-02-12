@@ -6,7 +6,7 @@
 
 Name:           subunit
 Version:        1.2.0
-Release:        17%{?dist}
+Release:        18%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -27,12 +27,12 @@ BuildRequires:  perl(ExtUtils::MakeMaker)
 BuildRequires:  pkgconfig
 BuildRequires:  python2-devel
 BuildRequires:  python2-hypothesis
-BuildRequires:  python-docutils
-BuildRequires:  python-extras
-BuildRequires:  python-fixtures
+BuildRequires:  python2-docutils
+BuildRequires:  python2-extras
+BuildRequires:  python2-fixtures
 BuildRequires:  python2-iso8601
 BuildRequires:  python2-setuptools
-BuildRequires:  python-testscenarios
+BuildRequires:  python2-testscenarios
 BuildRequires:  python2-testtools >= 1.8.0
 
 %if %{with python3}
@@ -95,7 +95,7 @@ processing functionality.
 %package -n python2-%{name}
 Summary:        Streaming protocol for test results
 BuildArch:      noarch
-Requires:       python-extras
+Requires:       python2-extras
 Requires:       python2-iso8601
 Requires:       python2-testtools >= 1.8.0
 
@@ -161,7 +161,7 @@ Summary:        Command line filters for processing subunit streams
 BuildArch:      noarch
 Requires:       python2-%{name} = %{version}-%{release}
 Requires:       pygtk2
-Requires:       python-junitxml
+Requires:       python2-junitxml
 
 %description filters
 Command line filters for processing subunit streams.
@@ -381,6 +381,10 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Mon Feb 12 2018 Iryna Shcherbina <ishcherb@redhat.com> - 1.2.0-18
+- Update Python 2 dependency declarations to new packaging standards
+  (See https://fedoraproject.org/wiki/FinalizingFedoraSwitchtoPython3)
+
 * Fri Feb 09 2018 Fedora Release Engineering <releng@fedoraproject.org> - 1.2.0-17
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
 
