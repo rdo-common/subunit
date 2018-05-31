@@ -325,13 +325,8 @@ PYTHONPATH=%{buildroot}%{python3_sitelib} %{__python3} -c "import subunit.iso860
 popd
 %endif
 
-%post -p /sbin/ldconfig
-
-%postun -p /sbin/ldconfig
-
-%post cppunit -p /sbin/ldconfig
-
-%postun cppunit -p /sbin/ldconfig
+%ldconfig_scriptlets
+%ldconfig_scriptlets cppunit
 
 %files
 %doc python2/NEWS python2/README.rst
