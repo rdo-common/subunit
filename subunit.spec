@@ -6,7 +6,7 @@
 
 Name:           subunit
 Version:        1.2.0
-Release:        18%{?dist}
+Release:        19%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -376,6 +376,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Tue Jun 19 2018 Miro Hrončok <mhroncok@redhat.com> - 1.2.0-19
+- Rebuilt for Python 3.7
+
 * Mon Feb 12 2018 Iryna Shcherbina <ishcherb@redhat.com> - 1.2.0-18
 - Update Python 2 dependency declarations to new packaging standards
   (See https://fedoraproject.org/wiki/FinalizingFedoraSwitchtoPython3)
