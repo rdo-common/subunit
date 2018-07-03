@@ -6,7 +6,7 @@
 
 Name:           subunit
 Version:        1.2.0
-Release:        20%{?dist}
+Release:        21%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -376,6 +376,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Tue Jul 03 2018 Petr Pisar <ppisar@redhat.com> - 1.2.0-21
+- Perl 5.28 rebuild
+
 * Wed Jun 27 2018 Jitka Plesnikova <jplesnik@redhat.com> - 1.2.0-20
 - Perl 5.28 rebuild
 
