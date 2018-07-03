@@ -1,5 +1,5 @@
---- ./COPYING.orig	2015-10-22 17:16:01.000000000 -0600
-+++ ./COPYING	2015-10-23 08:58:28.369418251 -0600
+--- COPYING.orig	2018-03-24 08:22:44.000000000 -0600
++++ COPYING	2018-07-03 15:07:50.241733503 -0600
 @@ -29,8 +29,6 @@ Code that has been incorporated into Sub
  naturally be under its own license, and will retain that license.
  
@@ -9,9 +9,9 @@
  * The runtests.py and python/subunit/tests/TestUtil.py module are GPL test
    support modules. They are not installed by Subunit - they are only ever
    used on the build machine.  Copyright 2004 Canonical Limited.
---- ./Makefile.in.orig	2015-10-22 17:23:07.000000000 -0600
-+++ ./Makefile.in	2015-10-23 08:58:28.371418091 -0600
-@@ -598,11 +598,6 @@ EXTRA_DIST = \
+--- Makefile.am.orig	2018-03-24 08:22:44.000000000 -0600
++++ Makefile.am	2018-07-03 15:08:08.386499408 -0600
+@@ -16,11 +16,6 @@ EXTRA_DIST =  \
  	perl/lib/Subunit.pm \
  	perl/lib/Subunit/Diff.pm \
  	perl/subunit-diff \
@@ -23,7 +23,7 @@
  	python/subunit/tests/__init__.py \
  	python/subunit/tests/sample-script.py \
  	python/subunit/tests/sample-two-script.py \
-@@ -656,7 +651,6 @@ pkgpython_PYTHON = \
+@@ -78,7 +73,6 @@ pkgpython_PYTHON = \
  	python/subunit/chunked.py \
  	python/subunit/details.py \
  	python/subunit/filters.py \
@@ -31,8 +31,8 @@
  	python/subunit/progress_model.py \
  	python/subunit/run.py \
  	python/subunit/v2.py \
---- ./README.rst.orig	2015-10-22 17:15:38.000000000 -0600
-+++ ./README.rst	2015-10-23 08:58:28.372418011 -0600
+--- README.rst.orig	2018-03-24 08:22:44.000000000 -0600
++++ README.rst	2018-07-03 15:08:21.114335195 -0600
 @@ -15,9 +15,6 @@
  
    See the COPYING file for full details on the licensing of Subunit.

@@ -5,8 +5,8 @@
 %endif
 
 Name:           subunit
-Version:        1.2.0
-Release:        21%{?dist}
+Version:        1.3.0
+Release:        1%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -22,6 +22,7 @@ Patch1:         %{name}-decode-binary-to-unicode.patch
 BuildRequires:  check-devel
 BuildRequires:  cppunit-devel
 BuildRequires:  gcc-c++
+BuildRequires:  libtool
 BuildRequires:  perl-generators
 BuildRequires:  perl(ExtUtils::MakeMaker)
 BuildRequires:  pkgconfig
@@ -166,12 +167,24 @@ Requires:       python2-junitxml
 %description filters
 Command line filters for processing subunit streams.
 
+%package static
+Summary:        Static C library for subunit
+Requires:       %{name}-devel%{?_isa} = %{version}-%{release}
+
+%description static
+Subunit C bindings in a static library, for building statically linked
+test cases.
+
+
 %prep
 %setup -qc
-mv %{name}-%{version} python2
-pushd python2
 %patch0
 %patch1 -p1
+
+fixtimestamp() {
+  touch -r $1.orig $1
+  rm $1.orig
+}
 
 # Help the dependency generator
 for filt in filters/*; do
@@ -182,34 +195,42 @@ for filt in filters/*; do
 done
 
 # Fix underlinked library
-sed "/libcppunit_subunit_la_/s,\$(LIBS),& -lcppunit -L$PWD/.libs -lsubunit," \
-    -i Makefile.in
+sed "/^tests_LDADD/ilibcppunit_subunit_la_LIBADD = -lcppunit libsubunit.la\n" \
+    -i Makefile.am
 
 # Depend on python2, not just python
 sed -i.orig 's,%{_bindir}/python,&2,' python/subunit/run.py
-touch -r python/subunit/run.py.orig python/subunit/run.py
-rm python/subunit/run.py.orig
+fixtimestamp python/subunit/run.py
+
+# Do not use env
+for fil in $(grep -Frl "%{_bindir}/env python"); do
+  sed -i.orig 's,%{_bindir}/env python,%{_bindir}/python2,' $fil
+  fixtimestamp $fil
+done
 
 # Replace bundled code with a symlink
 ln -f -s %{python2_sitelib}/iso8601/iso8601.py python/subunit/iso8601.py
-popd
+
+# Generate the configure script
+autoreconf -fi
 
 %if %{with python3}
 # Prepare to build for python 3
-cp -a python2 python3
+cp -a ../%{name}-%{version} ../python3
+mv ../python3 .
 pushd python3
-sed -i.orig 's,\(%{_bindir}/python\)2,\13,' python/subunit/run.py
-touch -r python/subunit/run.py.orig python/subunit/run.py
-rm python/subunit/run.py.orig
+for fil in $(grep -Frl "%{_bindir}/python2"); do
+  sed -i.orig 's,\(%{_bindir}/python\)2,\13,' $fil
+  fixtimestamp $fil
+done
 ln -f -s %{python3_sitelib}/iso8601/iso8601.py python/subunit/iso8601.py
 popd
 %endif
 
 %build
 # Build for everything except python3
-pushd python2
 export INSTALLDIRS=perl
-%configure --disable-static
+%configure --enable-shared --enable-static
 
 # Get rid of undesirable hardcoded rpaths; workaround libtool reordering
 # -Wl,--as-needed after all the libraries.
@@ -220,14 +241,13 @@ sed -e 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' \
 
 make %{?_smp_mflags}
 %py2_build
-popd
 
 # Build for python3
 %if %{with python3}
 pushd python3
 export INSTALLDIRS=perl
 export PYTHON=%{_bindir}/python3
-%configure --disable-static
+%configure --enable-shared --enable-static
 
 # Get rid of undesirable hardcoded rpaths; workaround libtool reordering
 # -Wl,--as-needed after all the libraries.
@@ -251,7 +271,7 @@ chmod 0755 %{buildroot}%{python3_sitelib}/%{name}/run.py
 # Replace bundled code with a symlink again
 ln -f -s %{python3_sitelib}/iso8601/iso8601.py \
    %{buildroot}%{python3_sitelib}/subunit/iso8601.py
-for fil in iso8601.cpython-35.opt-1.pyc iso8601.cpython-35.pyc; do
+for fil in iso8601.cpython-37.opt-1.pyc iso8601.cpython-37.pyc; do
   ln -f -s %{python3_sitelib}/iso8601/__pycache__/$fil \
      %{buildroot}%{python3_sitelib}/subunit/__pycache__/$fil
 done
@@ -262,7 +282,6 @@ rm -fr %{buildroot}%{python3_sitelib}/subunit/tests
 popd
 %endif
 
-pushd python2
 # We set pkgpython_PYTHON for efficiency to disable automake python compilation
 %make_install pkgpython_PYTHON='' INSTALL="%{_bindir}/install -p"
 
@@ -303,17 +322,13 @@ done
 # Don't distribute the python tests
 rm -fr %{buildroot}%{python2_sitelib}/subunit/tests
 
-popd
-
 %check
 # Run the tests for python2
-pushd python2
 export LD_LIBRARY_PATH=$PWD/.libs
 export PYTHONPATH=$PWD/python/subunit:$PWD/python/subunit/tests
 make check
 # Make sure subunit.iso8601 is importable from buildroot
 PYTHONPATH=%{buildroot}%{python2_sitelib} %{__python2} -c "import subunit.iso8601"
-popd
 
 %if %{with python3}
 # Run the tests for python3
@@ -329,12 +344,12 @@ popd
 %ldconfig_scriptlets cppunit
 
 %files
-%doc python2/NEWS python2/README.rst
-%license python2/Apache-2.0 python2/BSD python2/COPYING
+%doc NEWS README.rst
+%license Apache-2.0 BSD COPYING
 %{_libdir}/lib%{name}.so.*
 
 %files devel
-%doc python2/c/README
+%doc c/README
 %dir %{_includedir}/%{name}/
 %{_includedir}/%{name}/child.h
 %{_libdir}/lib%{name}.so
@@ -344,38 +359,45 @@ popd
 %{_libdir}/libcppunit_%{name}.so.*
 
 %files cppunit-devel
-%doc python2/c++/README
+%doc c++/README
 %{_includedir}/%{name}/SubunitTestProgressListener.h
 %{_libdir}/libcppunit_%{name}.so
 %{_libdir}/pkgconfig/libcppunit_%{name}.pc
 
 %files perl
-%license python2/Apache-2.0 python2/BSD python2/COPYING
+%license Apache-2.0 BSD COPYING
 %{_bindir}/%{name}-diff
 %{perl_vendorlib}/*
 
 %files shell
-%doc python2/shell/README
-%license python2/Apache-2.0 python2/BSD python2/COPYING
+%doc shell/README
+%license Apache-2.0 BSD COPYING
 %config(noreplace) %{_sysconfdir}/profile.d/%{name}.sh
 
 %files -n python2-%{name}
-%license python2/Apache-2.0 python2/BSD python2/COPYING
+%license Apache-2.0 BSD COPYING
 %{python2_sitelib}/%{name}/
 %{python2_sitelib}/python_%{name}-%{version}-*.egg-info
 
 %if %{with python3}
 %files -n python3-%{name}
-%license python3/Apache-2.0 python3/BSD python3/COPYING
+%license Apache-2.0 BSD COPYING
 %{python3_sitelib}/%{name}/
 %{python3_sitelib}/python_%{name}-%{version}-*.egg-info
 %endif
+
+%files static
+%{_libdir}/*.a
 
 %files filters
 %{_bindir}/*
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Tue Jul  3 2018 Jerry James <loganjerry@gmail.com> - 1.3.0-1
+- New upstream release
+- Add -static subpackage (bz 1575054)
+
 * Tue Jul 03 2018 Petr Pisar <ppisar@redhat.com> - 1.2.0-21
 - Perl 5.28 rebuild
 
