@@ -6,7 +6,7 @@
 
 Name:           subunit
 Version:        1.3.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -394,6 +394,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Tue Jul  3 2018 Jerry James <loganjerry@gmail.com> - 1.3.0-2
+- One more perl 5.28 rebuild
+
 * Tue Jul  3 2018 Jerry James <loganjerry@gmail.com> - 1.3.0-1
 - New upstream release
 - Add -static subpackage (bz 1575054)
