@@ -6,7 +6,7 @@
 
 Name:           subunit
 Version:        1.3.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -18,6 +18,10 @@ Source0:        https://launchpad.net/%{name}/trunk/%{majver}/+download/%{name}-
 Patch0:         %{name}-unbundle-iso8601.patch
 # Merged upsteam: https://github.com/testing-cabal/subunit/pull/10
 Patch1:         %{name}-decode-binary-to-unicode.patch
+# Migrate Gtk interface to GObject introspection
+# Upstream PR: https://github.com/testing-cabal/subunit/pull/34
+Patch2:        0001-Migrate-Gtk-interface-to-GObject-introspection.patch
+
 
 BuildRequires:  check-devel
 BuildRequires:  cppunit-devel
@@ -160,9 +164,17 @@ A number of useful things can be done easily with subunit:
 %package filters
 Summary:        Command line filters for processing subunit streams
 BuildArch:      noarch
+%if %{with python3}
+Requires:       python3-%{name} = %{version}-%{release}
+Requires:       python3-gobject
+Requires:       gtk3 >= 3.20
+Requires:       libnotify >= 0.7.7
+Requires:       python3-junitxml
+%else
 Requires:       python2-%{name} = %{version}-%{release}
 Requires:       pygtk2
 Requires:       python2-junitxml
+%endif
 
 %description filters
 Command line filters for processing subunit streams.
@@ -180,6 +192,7 @@ test cases.
 %setup -qc
 %patch0
 %patch1 -p1
+%patch2 -p1
 
 fixtimestamp() {
   touch -r $1.orig $1
@@ -189,6 +202,10 @@ fixtimestamp() {
 # Help the dependency generator
 for filt in filters/*; do
   sed 's,/usr/bin/env ,/usr/bin/,' $filt > ${filt}.new
+%if %{with python3}
+# Fix filters to use python3
+  sed -i 's,\(%{_bindir}/python\),\13,' ${filt}.new
+%endif
   chmod 0755 ${filt}.new
   touch -r $filt ${filt}.new
   mv -f ${filt}.new $filt
@@ -262,7 +279,9 @@ popd
 %endif
 
 %install
-# Install for python 3 first so that the python 2 install overwrites files
+# Install for python 2 first so that the python 3 install overwrites files
+%py2_install
+
 %if %{with python3}
 pushd python3
 %py3_install
@@ -284,9 +303,6 @@ popd
 
 # We set pkgpython_PYTHON for efficiency to disable automake python compilation
 %make_install pkgpython_PYTHON='' INSTALL="%{_bindir}/install -p"
-
-# Install the python interface
-%py2_install
 
 # Replace bundled code with a symlink again
 for fil in iso8601.py iso8601.pyc iso8601.pyo; do
@@ -394,6 +410,10 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Fri Nov 30 2018 Haïkel Guémar <hguemar@fedoraproject.org> - 1.3.0-4
+- Migrate GUI filters to Gtk3/GObject introspection
+- Migrate filters to python3
+
 * Sat Jul 14 2018 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.0-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
 
