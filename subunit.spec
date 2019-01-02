@@ -11,7 +11,7 @@
 
 Name:           subunit
 Version:        1.3.0
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -26,6 +26,9 @@ Patch1:         %{name}-decode-binary-to-unicode.patch
 # Migrate Gtk interface to GObject introspection
 # Upstream PR: https://github.com/testing-cabal/subunit/pull/34
 Patch2:        0001-Migrate-Gtk-interface-to-GObject-introspection.patch
+# Fix python3
+# Upstream PR: https://github.com/testing-cabal/subunit/pull/36 
+Patch3:        0002-Fix-file-open-for-python3.patch
 
 
 BuildRequires:  check-devel
@@ -415,6 +418,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Wed Jan  2 2019 Haïkel Guémar <hguemar@fedoraproject.org> - 1.3.0-5
+- Fix python3 compatibility
+
 * Fri Nov 30 2018 Haïkel Guémar <hguemar@fedoraproject.org> - 1.3.0-4
 - Migrate GUI filters to Gtk3/GObject introspection
 - Migrate filters to python3

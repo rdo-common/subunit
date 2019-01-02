@@ -1,4 +1,4 @@
-From 5ba871c0851dbff28320ec5887960a90a7aab260 Mon Sep 17 00:00:00 2001
+From ad3523fd57d01c9a443e2d1b07215c001d8da91d Mon Sep 17 00:00:00 2001
 From: Haikel Guemar <hguemar@fedoraproject.org>
 Date: Fri, 30 Nov 2018 14:30:08 +0100
 Subject: [PATCH] Migrate Gtk interface to GObject introspection
