@@ -11,7 +11,7 @@
 
 Name:           subunit
 Version:        1.3.0
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -201,6 +201,7 @@ test cases.
 %patch0
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
 
 fixtimestamp() {
   touch -r $1.orig $1
@@ -418,6 +419,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Wed Jan  9 2019 Haïkel Guémar <hguemar@fedoraproject.org> - 1.3.0-6
+- Ensure patches get applied
+
 * Wed Jan  2 2019 Haïkel Guémar <hguemar@fedoraproject.org> - 1.3.0-5
 - Fix python3 compatibility
 
