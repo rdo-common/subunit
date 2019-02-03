@@ -11,7 +11,7 @@
 
 Name:           subunit
 Version:        1.3.0
-Release:        6%{?dist}
+Release:        7%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -419,6 +419,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Sun Feb 03 2019 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.0-7
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
+
 * Wed Jan  9 2019 Haïkel Guémar <hguemar@fedoraproject.org> - 1.3.0-6
 - Ensure patches get applied
 
