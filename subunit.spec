@@ -11,7 +11,7 @@
 
 Name:           subunit
 Version:        1.3.0
-Release:        7%{?dist}
+Release:        8%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -25,10 +25,10 @@ Patch0:         %{name}-unbundle-iso8601.patch
 Patch1:         %{name}-decode-binary-to-unicode.patch
 # Migrate Gtk interface to GObject introspection
 # Upstream PR: https://github.com/testing-cabal/subunit/pull/34
-Patch2:        0001-Migrate-Gtk-interface-to-GObject-introspection.patch
+Patch2:         0001-Migrate-Gtk-interface-to-GObject-introspection.patch
 # Fix python3
 # Upstream PR: https://github.com/testing-cabal/subunit/pull/36 
-Patch3:        0002-Fix-file-open-for-python3.patch
+Patch3:         0002-Fix-file-open-for-python3.patch
 
 
 BuildRequires:  check-devel
@@ -136,6 +136,17 @@ A number of useful things can be done easily with subunit:
   deserialization to get test runs on distributed machines to be
   reported in real time.
 
+%package -n python2-%{name}-test
+Summary:        Test code for the python 2 subunit bindings
+BuildArch:      noarch
+Requires:       python2-%{name} = %{version}-%{release}
+Requires:       %{name}-filters = %{version}-%{release}
+
+%{?python_provide:%python_provide python2-%{name}-test}
+
+%description -n python2-%{name}-test
+%{summary}.
+
 %if %{with python3}
 %package -n python3-%{name}
 Summary:        Streaming protocol for test results
@@ -167,6 +178,17 @@ A number of useful things can be done easily with subunit:
 - Grid testing: subunit can act as the necessary serialization and
   deserialization to get test runs on distributed machines to be
   reported in real time.
+
+%package -n python3-%{name}-test
+Summary:        Test code for the python 3 subunit bindings
+BuildArch:      noarch
+Requires:       python3-%{name} = %{version}-%{release}
+Requires:       %{name}-filters = %{version}-%{release}
+
+%{?python_provide:%python_provide python3-%{name}-test}
+
+%description -n python3-%{name}-test
+%{summary}.
 %endif
 
 %package filters
@@ -295,6 +317,12 @@ popd
 pushd python3
 %py3_install
 chmod 0755 %{buildroot}%{python3_sitelib}/%{name}/run.py
+chmod 0755 %{buildroot}%{python3_sitelib}/%{name}/tests/sample-script.py
+chmod 0755 %{buildroot}%{python3_sitelib}/%{name}/tests/sample-two-script.py
+
+# Patch the test code to look for filters in _bindir
+sed -i "s|root, 'filters'|'/usr', 'bin'|" \
+  %{buildroot}%{python3_sitelib}/%{name}/tests/test_subunit_filter.py
 
 # Replace bundled code with a symlink again
 ln -f -s %{python3_sitelib}/iso8601/iso8601.py \
@@ -303,12 +331,12 @@ for fil in iso8601.cpython-37.opt-1.pyc iso8601.cpython-37.pyc; do
   ln -f -s %{python3_sitelib}/iso8601/__pycache__/$fil \
      %{buildroot}%{python3_sitelib}/subunit/__pycache__/$fil
 done
-
-# Don't distribute the python tests
-rm -fr %{buildroot}%{python3_sitelib}/subunit/tests
-
 popd
 %endif
+
+# Patch the test code to look for filters in _bindir
+sed -i "s|root, 'filters'|'/usr', 'bin'|" \
+  %{buildroot}%{python2_sitelib}/%{name}/tests/test_subunit_filter.py
 
 # We set pkgpython_PYTHON for efficiency to disable automake python compilation
 %make_install pkgpython_PYTHON='' INSTALL="%{_bindir}/install -p"
@@ -334,6 +362,8 @@ rm -fr %{buildroot}%{perl_archlib}
 # Fix permissions
 chmod 0755 %{buildroot}%{python2_sitelib}/%{name}/run.py
 chmod 0755 %{buildroot}%{_bindir}/subunit-diff
+chmod 0755 %{buildroot}%{python3_sitelib}/%{name}/tests/sample-script.py
+chmod 0755 %{buildroot}%{python3_sitelib}/%{name}/tests/sample-two-script.py
 
 # Fix timestamps
 touch -r c/include/%{name}/child.h %{buildroot}%{_includedir}/%{name}/child.h
@@ -343,9 +373,6 @@ touch -r perl/subunit-diff %{buildroot}%{_bindir}/subunit-diff
 for fil in filters/*; do
   touch -r $fil %{buildroot}%{_bindir}/$(basename $fil)
 done
-
-# Don't distribute the python tests
-rm -fr %{buildroot}%{python2_sitelib}/subunit/tests
 
 %check
 # Run the tests for python2
@@ -403,12 +430,20 @@ popd
 %license Apache-2.0 BSD COPYING
 %{python2_sitelib}/%{name}/
 %{python2_sitelib}/python_%{name}-%{version}-*.egg-info
+%exclude %{python2_sitelib}/%{name}/tests/
+
+%files -n python2-%{name}-test
+%{python2_sitelib}/%{name}/tests/
 
 %if %{with python3}
 %files -n python3-%{name}
 %license Apache-2.0 BSD COPYING
 %{python3_sitelib}/%{name}/
 %{python3_sitelib}/python_%{name}-%{version}-*.egg-info
+%exclude %{python3_sitelib}/%{name}/tests/
+
+%files -n python3-%{name}-test
+%{python3_sitelib}/%{name}/tests/
 %endif
 
 %files static
@@ -419,6 +454,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Wed Mar 20 2019 Andreas Schneider <asn@redhat.com> - 1.3.0-8
+- Ship the python tests, needed by Samba
+
 * Sun Feb 03 2019 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.0-7
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
 
