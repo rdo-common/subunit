@@ -4,14 +4,9 @@
 %bcond_with python3
 %endif
 
-#FIXME(hguemar): python3 test failure on aarch64
-%ifarch aarch64
-%global disable_tests 1
-%endif
-
 Name:           subunit
 Version:        1.3.0
-Release:        8%{?dist}
+Release:        9%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -136,17 +131,6 @@ A number of useful things can be done easily with subunit:
   deserialization to get test runs on distributed machines to be
   reported in real time.
 
-%package -n python2-%{name}-test
-Summary:        Test code for the python 2 subunit bindings
-BuildArch:      noarch
-Requires:       python2-%{name} = %{version}-%{release}
-Requires:       %{name}-filters = %{version}-%{release}
-
-%{?python_provide:%python_provide python2-%{name}-test}
-
-%description -n python2-%{name}-test
-%{summary}.
-
 %if %{with python3}
 %package -n python3-%{name}
 Summary:        Streaming protocol for test results
@@ -186,6 +170,10 @@ Requires:       python3-%{name} = %{version}-%{release}
 Requires:       %{name}-filters = %{version}-%{release}
 
 %{?python_provide:%python_provide python3-%{name}-test}
+
+# This can be removed when F29 reaches EOL
+Obsoletes:      python2-%{name}-test < 1.3.0-9
+Provides:       python2-%{name}-test = %{version}-%{release}
 
 %description -n python3-%{name}-test
 %{summary}.
@@ -432,9 +420,6 @@ popd
 %{python2_sitelib}/python_%{name}-%{version}-*.egg-info
 %exclude %{python2_sitelib}/%{name}/tests/
 
-%files -n python2-%{name}-test
-%{python2_sitelib}/%{name}/tests/
-
 %if %{with python3}
 %files -n python3-%{name}
 %license Apache-2.0 BSD COPYING
@@ -454,6 +439,10 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Thu Mar 28 2019 Jerry James <loganjerry@gmail.com> - 1.3.0-9
+- Do not ship the python 2 tests for F30+
+- Run tests on aarch64 again
+
 * Wed Mar 20 2019 Andreas Schneider <asn@redhat.com> - 1.3.0-8
 - Ship the python tests, needed by Samba
 
