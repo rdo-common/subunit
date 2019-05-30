@@ -6,7 +6,7 @@
 
 Name:           subunit
 Version:        1.3.0
-Release:        9%{?dist}
+Release:        10%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -439,6 +439,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Thu May 30 2019 Jitka Plesnikova <jplesnik@redhat.com> - 1.3.0-10
+- Perl 5.30 rebuild
+
 * Thu Mar 28 2019 Jerry James <loganjerry@gmail.com> - 1.3.0-9
 - Do not ship the python 2 tests for F30+
 - Run tests on aarch64 again
