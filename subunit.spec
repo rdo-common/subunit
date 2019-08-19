@@ -6,7 +6,7 @@
 
 Name:           subunit
 Version:        1.3.0
-Release:        11%{?dist}
+Release:        12%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -439,6 +439,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Mon Aug 19 2019 Miro Hrončok <mhroncok@redhat.com> - 1.3.0-12
+- Rebuilt for Python 3.8
+
 * Sat Jul 27 2019 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.0-11
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
 
