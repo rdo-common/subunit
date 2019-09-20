@@ -1,3 +1,9 @@
+%if (0%{?fedora} > 0 && 0%{?fedora} < 32) || (0%{?rhel} > 0 && 0%{?rhel} < 9)
+%bcond_without python2
+%else
+%bcond_with python2
+%endif
+
 %if 0%{?fedora} || 0%{?rhel} >= 8
 %bcond_without python3
 %else
@@ -6,7 +12,7 @@
 
 Name:           subunit
 Version:        1.3.0
-Release:        12%{?dist}
+Release:        13%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -33,23 +39,26 @@ BuildRequires:  libtool
 BuildRequires:  perl-generators
 BuildRequires:  perl(ExtUtils::MakeMaker)
 BuildRequires:  pkgconfig
+
+%if %{with python2}
 BuildRequires:  python2-devel
-BuildRequires:  python2-hypothesis
 BuildRequires:  python2-docutils
 BuildRequires:  python2-extras
 BuildRequires:  python2-fixtures
+BuildRequires:  python2-hypothesis
 BuildRequires:  python2-iso8601
 BuildRequires:  python2-setuptools
 BuildRequires:  python2-testscenarios
 BuildRequires:  python2-testtools >= 1.8.0
+%endif
 
 %if %{with python3}
 BuildRequires:  python3-devel
 BuildRequires:  python3-docutils
 BuildRequires:  python3-extras
 BuildRequires:  python3-fixtures
-BuildRequires:  python3-iso8601
 BuildRequires:  python3-hypothesis
+BuildRequires:  python3-iso8601
 BuildRequires:  python3-setuptools
 BuildRequires:  python3-testscenarios
 BuildRequires:  python3-testtools >= 1.8.0
@@ -100,6 +109,7 @@ BuildArch:      noarch
 Subunit shell bindings.  See the python-subunit package for test
 processing functionality.
 
+%if %{with python2}
 %package -n python2-%{name}
 Summary:        Streaming protocol for test results
 BuildArch:      noarch
@@ -130,6 +140,7 @@ A number of useful things can be done easily with subunit:
 - Grid testing: subunit can act as the necessary serialization and
   deserialization to get test runs on distributed machines to be
   reported in real time.
+%endif
 
 %if %{with python3}
 %package -n python3-%{name}
@@ -234,7 +245,7 @@ done
 sed "/^tests_LDADD/ilibcppunit_subunit_la_LIBADD = -lcppunit libsubunit.la\n" \
     -i Makefile.am
 
-# Depend on python2, not just python
+# Depend on versioned python
 sed -i.orig 's,%{_bindir}/python,&2,' python/subunit/run.py
 fixtimestamp python/subunit/run.py
 
@@ -264,8 +275,11 @@ popd
 %endif
 
 %build
-# Build for everything except python3
 export INSTALLDIRS=perl
+
+# Build for python2
+%if %{with python2}
+export PYTHON=%{_bindir}/python2
 %configure --enable-shared --enable-static
 
 # Get rid of undesirable hardcoded rpaths; workaround libtool reordering
@@ -277,11 +291,11 @@ sed -e 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' \
 
 make %{?_smp_mflags}
 %py2_build
+%endif
 
 # Build for python3
 %if %{with python3}
 pushd python3
-export INSTALLDIRS=perl
 export PYTHON=%{_bindir}/python3
 %configure --enable-shared --enable-static
 
@@ -299,7 +313,22 @@ popd
 
 %install
 # Install for python 2 first so that the python 3 install overwrites files
+%if %{with python2}
 %py2_install
+
+# Patch the test code to look for filters in _bindir
+sed -i "s|root, 'filters'|'/usr', 'bin'|" \
+  %{buildroot}%{python2_sitelib}/%{name}/tests/test_subunit_filter.py
+
+# Replace bundled code with a symlink again
+for fil in iso8601.py iso8601.pyc iso8601.pyo; do
+  ln -f -s %{python2_sitelib}/iso8601/$fil \
+     %{buildroot}%{python2_sitelib}/subunit/$fil
+done
+
+# We set pkgpython_PYTHON for efficiency to disable automake python compilation
+%make_install pkgpython_PYTHON='' INSTALL="%{_bindir}/install -p"
+%endif
 
 %if %{with python3}
 pushd python3
@@ -319,21 +348,11 @@ for fil in iso8601.cpython-37.opt-1.pyc iso8601.cpython-37.pyc; do
   ln -f -s %{python3_sitelib}/iso8601/__pycache__/$fil \
      %{buildroot}%{python3_sitelib}/subunit/__pycache__/$fil
 done
-popd
-%endif
-
-# Patch the test code to look for filters in _bindir
-sed -i "s|root, 'filters'|'/usr', 'bin'|" \
-  %{buildroot}%{python2_sitelib}/%{name}/tests/test_subunit_filter.py
 
 # We set pkgpython_PYTHON for efficiency to disable automake python compilation
 %make_install pkgpython_PYTHON='' INSTALL="%{_bindir}/install -p"
-
-# Replace bundled code with a symlink again
-for fil in iso8601.py iso8601.pyc iso8601.pyo; do
-  ln -f -s %{python2_sitelib}/iso8601/$fil \
-     %{buildroot}%{python2_sitelib}/subunit/$fil
-done
+popd
+%endif
 
 # Install the shell interface
 mkdir -p %{buildroot}%{_sysconfdir}/profile.d
@@ -348,10 +367,14 @@ mv %{buildroot}%{perl_privlib}/Subunit* %{buildroot}%{perl_vendorlib}
 rm -fr %{buildroot}%{perl_archlib}
 
 # Fix permissions
+%if %{with python2}
 chmod 0755 %{buildroot}%{python2_sitelib}/%{name}/run.py
+%endif
 chmod 0755 %{buildroot}%{_bindir}/subunit-diff
+%if %{with python3}
 chmod 0755 %{buildroot}%{python3_sitelib}/%{name}/tests/sample-script.py
 chmod 0755 %{buildroot}%{python3_sitelib}/%{name}/tests/sample-two-script.py
+%endif
 
 # Fix timestamps
 touch -r c/include/%{name}/child.h %{buildroot}%{_includedir}/%{name}/child.h
@@ -363,16 +386,19 @@ for fil in filters/*; do
 done
 
 %check
+%if %{with python2} && 0%{?!disable_tests}
 # Run the tests for python2
 export LD_LIBRARY_PATH=$PWD/.libs
 export PYTHONPATH=$PWD/python/subunit:$PWD/python/subunit/tests
 make check
 # Make sure subunit.iso8601 is importable from buildroot
 PYTHONPATH=%{buildroot}%{python2_sitelib} %{__python2} -c "import subunit.iso8601"
+%endif
 
 %if %{with python3} && 0%{?!disable_tests}
 # Run the tests for python3
 pushd python3
+export LD_LIBRARY_PATH=$PWD/.libs
 export PYTHON=%{__python3}
 make check
 # Make sure subunit.iso8601 is importable from buildroot
@@ -414,11 +440,13 @@ popd
 %license Apache-2.0 BSD COPYING
 %config(noreplace) %{_sysconfdir}/profile.d/%{name}.sh
 
+%if %{with python2}
 %files -n python2-%{name}
 %license Apache-2.0 BSD COPYING
 %{python2_sitelib}/%{name}/
 %{python2_sitelib}/python_%{name}-%{version}-*.egg-info
 %exclude %{python2_sitelib}/%{name}/tests/
+%endif
 
 %if %{with python3}
 %files -n python3-%{name}
@@ -439,6 +467,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Fri Sep 20 2019 Jerry James <loganjerry@gmail.com> - 1.3.0-13
+- Drop python2 support in Fedora 32+ and EPEL 9+ (bz 1753957)
+
 * Mon Aug 19 2019 Miro Hrončok <mhroncok@redhat.com> - 1.3.0-12
 - Rebuilt for Python 3.8
 
