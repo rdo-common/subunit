@@ -12,7 +12,7 @@
 
 Name:           subunit
 Version:        1.3.0
-Release:        13%{?dist}
+Release:        14%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -146,9 +146,11 @@ A number of useful things can be done easily with subunit:
 %package -n python3-%{name}
 Summary:        Streaming protocol for test results
 BuildArch:      noarch
-Requires:       python3-extras
 Requires:       python3-iso8601
+%if %{with python2}
+Requires:       python3-extras
 Requires:       python3-testtools >= 1.8.0
+%endif
 
 %{?python_provide:%python_provide python3-%{name}}
 
@@ -344,7 +346,8 @@ sed -i "s|root, 'filters'|'/usr', 'bin'|" \
 # Replace bundled code with a symlink again
 ln -f -s %{python3_sitelib}/iso8601/iso8601.py \
    %{buildroot}%{python3_sitelib}/subunit/iso8601.py
-for fil in iso8601.cpython-37.opt-1.pyc iso8601.cpython-37.pyc; do
+for fil in iso8601.cpython-%{python3_version_nodots}.opt-1.pyc \
+           iso8601.cpython-%{python3_version_nodots}.pyc; do
   ln -f -s %{python3_sitelib}/iso8601/__pycache__/$fil \
      %{buildroot}%{python3_sitelib}/subunit/__pycache__/$fil
 done
@@ -467,6 +470,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Wed Oct 16 2019 Jerry James <loganjerry@gmail.com> - 1.3.0-14
+- Fix symlinks for python 3.8
+
 * Fri Sep 20 2019 Jerry James <loganjerry@gmail.com> - 1.3.0-13
 - Drop python2 support in Fedora 32+ and EPEL 9+ (bz 1753957)
 
