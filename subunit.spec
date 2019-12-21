@@ -12,7 +12,7 @@
 
 Name:           subunit
 Version:        1.3.0
-Release:        14%{?dist}
+Release:        15%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -470,6 +470,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Sat Dec 21 2019 David Tardon <dtardon@redhat.com> - 1.3.0-15
+- rebuild for cppunit 1.15.0
+
 * Wed Oct 16 2019 Jerry James <loganjerry@gmail.com> - 1.3.0-14
 - Fix symlinks for python 3.8
 
