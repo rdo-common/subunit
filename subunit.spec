@@ -12,7 +12,7 @@
 
 Name:           subunit
 Version:        1.3.0
-Release:        15%{?dist}
+Release:        16%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -470,6 +470,9 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Wed Dec 25 2019 David Tardon <dtardon@redhat.com> - 1.3.0-16
+- rebuild for cppunit 1.15.1
+
 * Sat Dec 21 2019 David Tardon <dtardon@redhat.com> - 1.3.0-15
 - rebuild for cppunit 1.15.0
 
