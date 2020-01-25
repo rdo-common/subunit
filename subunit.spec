@@ -184,10 +184,6 @@ Requires:       %{name}-filters = %{version}-%{release}
 
 %{?python_provide:%python_provide python3-%{name}-test}
 
-# This can be removed when F29 reaches EOL
-Obsoletes:      python2-%{name}-test < 1.3.0-9
-Provides:       python2-%{name}-test = %{version}-%{release}
-
 %description -n python3-%{name}-test
 %{summary}.
 %endif
