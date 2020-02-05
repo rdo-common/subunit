@@ -1,4 +1,5 @@
-%if (0%{?fedora} > 0 && 0%{?fedora} < 32) || (0%{?rhel} > 0 && 0%{?rhel} < 9)
+%{?python_enable_dependency_generator}
+%if (0%{?fedora} > 0 && 0%{?fedora} < 32) || (0%{?rhel} > 0 && 0%{?rhel} < 8)
 %bcond_without python2
 %else
 %bcond_with python2
