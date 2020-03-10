@@ -12,7 +12,7 @@
 
 Name:           subunit
 Version:        1.3.0
-Release:        17%{?dist}
+Release:        18%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -20,16 +20,14 @@ Summary:        C bindings for subunit
 License:        ASL 2.0 or BSD
 URL:            https://launchpad.net/%{name}
 Source0:        https://launchpad.net/%{name}/trunk/%{majver}/+download/%{name}-%{version}.tar.gz
-# Fedora-specific patch: remove the bundled copy of python-iso8601.
-Patch0:         %{name}-unbundle-iso8601.patch
 # Merged upsteam: https://github.com/testing-cabal/subunit/pull/10
-Patch1:         %{name}-decode-binary-to-unicode.patch
+Patch0:         %{name}-decode-binary-to-unicode.patch
 # Migrate Gtk interface to GObject introspection
-# Upstream PR: https://github.com/testing-cabal/subunit/pull/34
-Patch2:         0001-Migrate-Gtk-interface-to-GObject-introspection.patch
+# Merged upstream: https://github.com/testing-cabal/subunit/pull/34
+Patch1:         0001-Migrate-Gtk-interface-to-GObject-introspection.patch
 # Fix python3
-# Upstream PR: https://github.com/testing-cabal/subunit/pull/36 
-Patch3:         0002-Fix-file-open-for-python3.patch
+# Merged upstream: https://github.com/testing-cabal/subunit/pull/36
+Patch2:         0002-Fix-file-open-for-python3.patch
 
 
 BuildRequires:  check-devel
@@ -46,7 +44,6 @@ BuildRequires:  python2-docutils
 BuildRequires:  python2-extras
 BuildRequires:  python2-fixtures
 BuildRequires:  python2-hypothesis
-BuildRequires:  python2-iso8601
 BuildRequires:  python2-setuptools
 BuildRequires:  python2-testscenarios
 BuildRequires:  python2-testtools >= 1.8.0
@@ -58,7 +55,6 @@ BuildRequires:  python3-docutils
 BuildRequires:  python3-extras
 BuildRequires:  python3-fixtures
 BuildRequires:  python3-hypothesis
-BuildRequires:  python3-iso8601
 BuildRequires:  python3-setuptools
 BuildRequires:  python3-testscenarios
 BuildRequires:  python3-testtools >= 1.8.0
@@ -118,6 +114,7 @@ Requires:       python2-iso8601
 Requires:       python2-testtools >= 1.8.0
 
 %{?python_provide:%python_provide python2-%{name}}
+Provides:       bundled(python2-iso8601) = 0.1.4
 
 %description -n python2-%{name}
 Subunit is a streaming protocol for test results.  The protocol is a
@@ -153,6 +150,7 @@ Requires:       python3-testtools >= 1.8.0
 %endif
 
 %{?python_provide:%python_provide python3-%{name}}
+Provides:       bundled(python3-iso8601) = 0.1.4
 
 %description -n python3-%{name}
 Subunit is a streaming protocol for test results.  The protocol is a
@@ -216,11 +214,7 @@ test cases.
 
 
 %prep
-%setup -qc
-%patch0
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
+%autosetup -c -p1
 
 fixtimestamp() {
   touch -r $1.orig $1
@@ -253,9 +247,6 @@ for fil in $(grep -Frl "%{_bindir}/env python"); do
   fixtimestamp $fil
 done
 
-# Replace bundled code with a symlink
-ln -f -s %{python2_sitelib}/iso8601/iso8601.py python/subunit/iso8601.py
-
 # Generate the configure script
 autoreconf -fi
 
@@ -268,7 +259,6 @@ for fil in $(grep -Frl "%{_bindir}/python2"); do
   sed -i.orig 's,\(%{_bindir}/python\)2,\13,' $fil
   fixtimestamp $fil
 done
-ln -f -s %{python3_sitelib}/iso8601/iso8601.py python/subunit/iso8601.py
 popd
 %endif
 
@@ -318,12 +308,6 @@ popd
 sed -i "s|root, 'filters'|'/usr', 'bin'|" \
   %{buildroot}%{python2_sitelib}/%{name}/tests/test_subunit_filter.py
 
-# Replace bundled code with a symlink again
-for fil in iso8601.py iso8601.pyc iso8601.pyo; do
-  ln -f -s %{python2_sitelib}/iso8601/$fil \
-     %{buildroot}%{python2_sitelib}/subunit/$fil
-done
-
 # We set pkgpython_PYTHON for efficiency to disable automake python compilation
 %make_install pkgpython_PYTHON='' INSTALL="%{_bindir}/install -p"
 %endif
@@ -338,15 +322,6 @@ chmod 0755 %{buildroot}%{python3_sitelib}/%{name}/tests/sample-two-script.py
 # Patch the test code to look for filters in _bindir
 sed -i "s|root, 'filters'|'/usr', 'bin'|" \
   %{buildroot}%{python3_sitelib}/%{name}/tests/test_subunit_filter.py
-
-# Replace bundled code with a symlink again
-ln -f -s %{python3_sitelib}/iso8601/iso8601.py \
-   %{buildroot}%{python3_sitelib}/subunit/iso8601.py
-for fil in iso8601.cpython-%{python3_version_nodots}.opt-1.pyc \
-           iso8601.cpython-%{python3_version_nodots}.pyc; do
-  ln -f -s %{python3_sitelib}/iso8601/__pycache__/$fil \
-     %{buildroot}%{python3_sitelib}/subunit/__pycache__/$fil
-done
 
 # We set pkgpython_PYTHON for efficiency to disable automake python compilation
 %make_install pkgpython_PYTHON='' INSTALL="%{_bindir}/install -p"
@@ -466,6 +441,10 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Tue Mar 10 2020 Jerry James <loganjerry@gmail.com> - 1.3.0-18
+- The python iso8601 module in Fedora has diverged too much from the bundled
+  version.  Allow this package to bundle it (bz 1811697).
+
 * Fri Jan 31 2020 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.0-17
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
 
