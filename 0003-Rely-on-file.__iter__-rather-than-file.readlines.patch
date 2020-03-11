@@ -1,0 +1,29 @@
+From 13d6aaa40c297e721209b29a9a08f9229462daab Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jelmer=20Vernoo=C4=B3?= <jelmer@jelmer.uk>
+Date: Fri, 15 Jun 2018 15:56:22 +0100
+Subject: [PATCH] Rely on file.__iter__ rather than file.readlines.
+
+---
+ python/subunit/__init__.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/python/subunit/__init__.py b/python/subunit/__init__.py
+index b3b198c..81b773c 100644
+--- a/python/subunit/__init__.py
++++ b/python/subunit/__init__.py
+@@ -579,10 +579,10 @@ class TestProtocolServer(object):
+     def readFrom(self, pipe):
+         """Blocking convenience API to parse an entire stream.
+ 
+-        :param pipe: A file-like object supporting readlines().
++        :param pipe: A file-like object supporting __iter__.
+         :return: None.
+         """
+-        for line in pipe.readlines():
++        for line in pipe:
+             self.lineReceived(line)
+         self.lostConnection()
+ 
+-- 
+2.24.1
+

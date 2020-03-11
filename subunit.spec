@@ -12,7 +12,7 @@
 
 Name:           subunit
 Version:        1.3.0
-Release:        18%{?dist}
+Release:        19%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -20,15 +20,18 @@ Summary:        C bindings for subunit
 License:        ASL 2.0 or BSD
 URL:            https://launchpad.net/%{name}
 Source0:        https://launchpad.net/%{name}/trunk/%{majver}/+download/%{name}-%{version}.tar.gz
-# Merged upsteam: https://github.com/testing-cabal/subunit/pull/10
-Patch0:         %{name}-decode-binary-to-unicode.patch
 # Migrate Gtk interface to GObject introspection
 # Merged upstream: https://github.com/testing-cabal/subunit/pull/34
-Patch1:         0001-Migrate-Gtk-interface-to-GObject-introspection.patch
+Patch0:         0001-Migrate-Gtk-interface-to-GObject-introspection.patch
 # Fix python3
 # Merged upstream: https://github.com/testing-cabal/subunit/pull/36
-Patch2:         0002-Fix-file-open-for-python3.patch
-
+Patch1:         0002-Fix-file-open-for-python3.patch
+# Rely on file.__iter__ rather than file.readlines
+# https://github.com/testing-cabal/subunit/commit/13d6aaa40c297e721209b29a9a08f9229462daab
+Patch2:         0003-Rely-on-file.__iter__-rather-than-file.readlines.patch
+# Check written bytes are not None before summing them to offset
+# https://github.com/testing-cabal/subunit/commit/44af2b1eebd438178681fd3a1af38d9def2f93e9
+Patch3:         0004-Check-written-bytes-are-not-None-before-summing-them.patch
 
 BuildRequires:  check-devel
 BuildRequires:  cppunit-devel
@@ -441,6 +444,11 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Wed Mar 11 2020 Jerry James <loganjerry@gmail.com> - 1.3.0-19
+- Drop the -decode-binary-to-unicode patch; it doesn't work with the bundled
+  version of iso8601.
+- Add 0003 and 0004 patches to fix bugs reported to upstream.
+
 * Tue Mar 10 2020 Jerry James <loganjerry@gmail.com> - 1.3.0-18
 - The python iso8601 module in Fedora has diverged too much from the bundled
   version.  Allow this package to bundle it (bz 1811697).
