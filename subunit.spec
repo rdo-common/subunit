@@ -11,35 +11,27 @@
 %endif
 
 Name:           subunit
-Version:        1.3.0
-Release:        19%{?dist}
+Version:        1.4.0
+Release:        1%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
 
 License:        ASL 2.0 or BSD
 URL:            https://launchpad.net/%{name}
-Source0:        https://launchpad.net/%{name}/trunk/%{majver}/+download/%{name}-%{version}.tar.gz
-# Migrate Gtk interface to GObject introspection
-# Merged upstream: https://github.com/testing-cabal/subunit/pull/34
-Patch0:         0001-Migrate-Gtk-interface-to-GObject-introspection.patch
-# Fix python3
-# Merged upstream: https://github.com/testing-cabal/subunit/pull/36
-Patch1:         0002-Fix-file-open-for-python3.patch
-# Rely on file.__iter__ rather than file.readlines
-# https://github.com/testing-cabal/subunit/commit/13d6aaa40c297e721209b29a9a08f9229462daab
-Patch2:         0003-Rely-on-file.__iter__-rather-than-file.readlines.patch
-# Check written bytes are not None before summing them to offset
-# https://github.com/testing-cabal/subunit/commit/44af2b1eebd438178681fd3a1af38d9def2f93e9
-Patch3:         0004-Check-written-bytes-are-not-None-before-summing-them.patch
+Source0:        https://launchpad.net/%{name}/trunk/%{version}/+download/%{name}-%{version}.tar.gz
+Source1:        https://launchpad.net/%{name}/trunk/%{version}/+download/%{name}-%{version}.tar.gz.asc
+# Public key for Jelmer Vernooij <jelmer@jelmer.uk>
+Source2:        gpgkey-B23862C415D6565A4E86CBD7579C160D4C9E23E8.gpg
 
-BuildRequires:  check-devel
-BuildRequires:  cppunit-devel
 BuildRequires:  gcc-c++
+BuildRequires:  gnupg2
 BuildRequires:  libtool
 BuildRequires:  perl-generators
 BuildRequires:  perl(ExtUtils::MakeMaker)
 BuildRequires:  pkgconfig
+BuildRequires:  pkgconfig(check)
+BuildRequires:  pkgconfig(cppunit)
 
 %if %{with python2}
 BuildRequires:  python2-devel
@@ -54,13 +46,13 @@ BuildRequires:  python2-testtools >= 1.8.0
 
 %if %{with python3}
 BuildRequires:  python3-devel
-BuildRequires:  python3-docutils
-BuildRequires:  python3-extras
-BuildRequires:  python3-fixtures
-BuildRequires:  python3-hypothesis
-BuildRequires:  python3-setuptools
-BuildRequires:  python3-testscenarios
-BuildRequires:  python3-testtools >= 1.8.0
+BuildRequires:  python3dist(docutils)
+BuildRequires:  python3dist(extras)
+BuildRequires:  python3dist(fixtures)
+BuildRequires:  python3dist(hypothesis)
+BuildRequires:  python3dist(setuptools)
+BuildRequires:  python3dist(testscenarios)
+BuildRequires:  python3dist(testtools) >= 1.8.0
 %endif
 
 %description
@@ -113,7 +105,6 @@ processing functionality.
 Summary:        Streaming protocol for test results
 BuildArch:      noarch
 Requires:       python2-extras
-Requires:       python2-iso8601
 Requires:       python2-testtools >= 1.8.0
 
 %{?python_provide:%python_provide python2-%{name}}
@@ -146,7 +137,6 @@ A number of useful things can be done easily with subunit:
 %package -n python3-%{name}
 Summary:        Streaming protocol for test results
 BuildArch:      noarch
-Requires:       python3-iso8601
 %if %{with python2}
 Requires:       python3-extras
 Requires:       python3-testtools >= 1.8.0
@@ -197,7 +187,7 @@ Requires:       python3-%{name} = %{version}-%{release}
 Requires:       python3-gobject
 Requires:       gtk3 >= 3.20
 Requires:       libnotify >= 0.7.7
-Requires:       python3-junitxml
+Requires:       python3dist(junitxml)
 %else
 Requires:       python2-%{name} = %{version}-%{release}
 Requires:       pygtk2
@@ -217,24 +207,15 @@ test cases.
 
 
 %prep
-%autosetup -c -p1
+%autosetup -p1
+
+# Verify the source file
+gpgv2 --keyring %{SOURCE2} %{SOURCE1} %{SOURCE0}
 
 fixtimestamp() {
   touch -r $1.orig $1
   rm $1.orig
 }
-
-# Help the dependency generator
-for filt in filters/*; do
-  sed 's,/usr/bin/env ,/usr/bin/,' $filt > ${filt}.new
-%if %{with python3}
-# Fix filters to use python3
-  sed -i 's,\(%{_bindir}/python\),\13,' ${filt}.new
-%endif
-  chmod 0755 ${filt}.new
-  touch -r $filt ${filt}.new
-  mv -f ${filt}.new $filt
-done
 
 # Fix underlinked library
 sed "/^tests_LDADD/ilibcppunit_subunit_la_LIBADD = -lcppunit libsubunit.la\n" \
@@ -280,7 +261,7 @@ sed -e 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' \
     -e 's|CC=.g..|& -Wl,--as-needed|' \
     -i libtool
 
-make %{?_smp_mflags}
+%make_build
 %py2_build
 %endif
 
@@ -297,7 +278,7 @@ sed -e 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' \
     -e 's|CC=.g..|& -Wl,--as-needed|' \
     -i libtool
 
-make %{?_smp_mflags}
+%make_build
 %py3_build
 popd
 %endif
@@ -444,6 +425,11 @@ popd
 %exclude %{_bindir}/%{name}-diff
 
 %changelog
+* Wed Mar 18 2020 Jerry James <loganjerry@gmail.com> - 1.4.0-1
+- Version 1.4.0
+- Drop all patches; all have been upstreamed
+- Verify the source tarball
+
 * Wed Mar 11 2020 Jerry James <loganjerry@gmail.com> - 1.3.0-19
 - Drop the -decode-binary-to-unicode patch; it doesn't work with the bundled
   version of iso8601.
