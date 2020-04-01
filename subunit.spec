@@ -12,7 +12,7 @@
 
 Name:           subunit
 Version:        1.4.0
-Release:        1%{?dist}
+Release:        1.1%{?dist}
 Summary:        C bindings for subunit
 
 %global majver  %(cut -d. -f-2 <<< %{version})
@@ -27,7 +27,9 @@ Source2:        gpgkey-B23862C415D6565A4E86CBD7579C160D4C9E23E8.gpg
 BuildRequires:  gcc-c++
 BuildRequires:  gnupg2
 BuildRequires:  libtool
+%if 0%{?fedora} || 0%{?rhel} > 7
 BuildRequires:  perl-generators
+%endif
 BuildRequires:  perl(ExtUtils::MakeMaker)
 BuildRequires:  pkgconfig
 BuildRequires:  pkgconfig(check)
@@ -35,7 +37,11 @@ BuildRequires:  pkgconfig(cppunit)
 
 %if %{with python2}
 BuildRequires:  python2-devel
+%if 0%{?fedora} || 0%{?rhel} > 7
 BuildRequires:  python2-docutils
+%else
+BuildRequires:  python-docutils
+%endif
 BuildRequires:  python2-extras
 BuildRequires:  python2-fixtures
 BuildRequires:  python2-hypothesis
@@ -191,7 +197,11 @@ Requires:       python3dist(junitxml)
 %else
 Requires:       python2-%{name} = %{version}-%{release}
 Requires:       pygtk2
+%if 0%{?fedora} || 0%{?rhel} > 7
 Requires:       python2-junitxml
+%else
+Requires:       python-junitxml
+%endif
 %endif
 
 %description filters
@@ -364,8 +374,15 @@ PYTHONPATH=%{buildroot}%{python3_sitelib} %{__python3} -c "import subunit.iso860
 popd
 %endif
 
+%if 0%{?fedora} || 0%{?rhel} > 7
 %ldconfig_scriptlets
 %ldconfig_scriptlets cppunit
+%else
+%post -p /sbin/ldconfig
+%postun -p /sbin/ldconfig
+%post cppunit -p /sbin/ldconfig
+%postun cppunit -p /sbin/ldconfig
+%endif
 
 %files
 %doc NEWS README.rst
